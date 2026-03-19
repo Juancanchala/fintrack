@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp main.py backend/app/main.py)",
+      "Bash(cp config.py backend/app/core/config.py)",
+      "Bash(cp index.html frontend/pages/index.html)",
+      "Bash(cp dashboard.html frontend/pages/dashboard.html)",
+      "Bash(cp env:*)"
+    ]
+  }
+}

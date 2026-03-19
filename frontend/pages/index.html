@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinTrack — Finanzas Personales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0a0a0f;
+    --paper:     #f5f2eb;
+    --accent:    #c8f53a;
+    --muted:     #6b6b72;
+    --border:    #2a2a35;
+    --card:      #13131a;
+    --danger:    #ff4757;
+    --success:   #2ed573;
+    --mono: 'DM Mono', monospace;
+    --serif: 'DM Serif Display', serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    overflow: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(200,245,58,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,245,58,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  /* Glowing orb */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,245,58,0.08) 0%, transparent 70%);
+    top: -200px; right: -100px;
+    pointer-events: none;
+    animation: pulse 8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 100vh;
+  }
+
+  /* ── Left panel ── */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-ticker {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .hero-ticker span { color: var(--accent); }
+
+  .hero-main {
+    animation: slideUp 0.8s ease both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .brand {
+    font-family: var(--serif);
+    font-size: clamp(3rem, 5vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  .brand em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 36ch;
+    margin-bottom: 3rem;
+    letter-spacing: 0.02em;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .stat {
+    background: var(--ink);
+    padding: 1.2rem 1rem;
+    transition: background 0.2s;
+  }
+
+  .stat:hover { background: var(--card); }
+
+  .stat-val {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .stat-lbl {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-footer {
+    font-size: 0.65rem;
+    color: var(--border);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Right panel ── */
+  .auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 3.5rem;
+    overflow-y: auto;
+    animation: slideUp 0.8s 0.15s ease both;
+    opacity: 0;
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.5rem 0.75rem 0;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+  }
+
+  .tab-btn.active {
+    color: var(--paper);
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 100%; height: 2px;
+    background: var(--accent);
+  }
+
+  .form-title {
+    font-family: var(--serif);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+  }
+
+  .form-subtitle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    letter-spacing: 0.02em;
+  }
+
+  .demo-hint {
+    background: rgba(200,245,58,0.07);
+    border: 1px solid rgba(200,245,58,0.2);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .field {
+    margin-bottom: 1.1rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 2px;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,245,58,0.1);
+  }
+
+  .field input::placeholder { color: #3a3a45; }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: var(--ink);
+    border: none;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.2s, transform 0.15s;
+    border-radius: 2px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-primary .spinner {
+    display: none;
+    width: 14px; height: 14px;
+    border: 2px solid var(--ink);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-primary.loading .btn-text { display: none; }
+  .btn-primary.loading .spinner { display: block; }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .alert.error { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--danger); display: flex; }
+  .alert.success { background: rgba(46,213,115,0.1); border: 1px solid rgba(46,213,115,0.3); color: var(--success); display: flex; }
+
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  /* responsive */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .hero { display: none; }
+    .auth-panel { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- LEFT HERO -->
+  <div class="hero">
+    <div class="hero-ticker">
+      <span>↑ 12.4%</span> rendimiento · <span>$0</span> comisiones · cifrado AES-256
+    </div>
+
+    <div class="hero-main">
+      <h1 class="brand">Fin<em>Track</em></h1>
+      <p class="hero-desc">
+        Controla cada peso. Entiende tus patrones.<br/>
+        Decisiones financieras basadas en datos reales,<br/>
+        con inteligencia artificial a tu lado.
+      </p>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-val">100%</span>
+          <span class="stat-lbl">Privacidad</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">IA</span>
+          <span class="stat-lbl">Insights</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">COP</span>
+          <span class="stat-lbl">Colombia</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-footer">© 2025 FinTrack · Gestión financiera personal</div>
+  </div>
+
+  <!-- RIGHT AUTH -->
+  <div class="auth-panel">
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Ingresar</button>
+      <button class="tab-btn" onclick="switchTab('register')">Crear cuenta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPanel" class="form-panel active">
+      <h2 class="form-title">Bienvenido<br/><em style="font-style:italic;color:var(--accent)">de vuelta.</em></h2>
+      <p class="form-subtitle">Ingresa tus credenciales para continuar</p>
+
+      <div class="demo-hint">
+        ⚡ Demo: <strong>demo@fintrack.app</strong> / <strong>demo1234</strong>
+      </div>
+
+      <div id="loginAlert" class="alert"></div>
+
+      <div class="field">
+        <label>Email o usuario</label>
+        <input id="loginUser" type="text" placeholder="demo@fintrack.app" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+        <span class="btn-text">Ingresar →</span>
+        <span class="spinner"></span>
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPanel" class="form-panel">
+      <h2 class="form-title">Empieza hoy<br/><em style="font-style:italic;color:var(--accent)">gratis.</em></h2>
+      <p class="form-subtitle">Crea tu cuenta en segundos</p>
+
+      <div id="registerAlert" class="alert"></div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input id="regName" type="text" placeholder="Juan Camilo García"/>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="regEmail" type="email" placeholder="tuemail@ejemplo.com"/>
+      </div>
+      <div class="field">
+        <label>Usuario</label>
+        <input id="regUser" type="text" placeholder="juancamilo"/>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="regPass" type="password" placeholder="Mínimo 8 caracteres"/>
+      </div>
+
+      <button class="btn-primary" id="registerBtn" onclick="doRegister()">
+        <span class="btn-text">Crear cuenta →</span>
+        <span class="spinner"></span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = '';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+    document.getElementById('loginPanel').classList.toggle('active', tab === 'login');
+    document.getElementById('registerPanel').classList.toggle('active', tab === 'register');
+  }
+
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `alert ${type}`;
+  }
+
+  function setLoading(btnId, loading) {
+    document.getElementById(btnId).classList.toggle('loading', loading);
+    document.getElementById(btnId).disabled = loading;
+  }
+
+  async function doLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    if (!user || !pass) return showAlert('loginAlert', 'Completa todos los campos.', 'error');
+
+    setLoading('loginBtn', true);
+    try {
+      const form = new URLSearchParams({ username: user, password: pass });
+      const res = await fetch(`${API}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al ingresar');
+      localStorage.setItem('ft_token', data.access_token);
+      showAlert('loginAlert', '✓ Ingresando…', 'success');
+      setTimeout(() => window.location.href = '/dashboard', 600);
+    } catch(e) {
+      showAlert('loginAlert', e.message, 'error');
+    } finally {
+      setLoading('loginBtn', false);
+    }
+  }
+
+  async function doRegister() {
+    const name  = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const user  = document.getElementById('regUser').value.trim();
+    const pass  = document.getElementById('regPass').value;
+    if (!email || !user || !pass) return showAlert('registerAlert', 'Completa los campos obligatorios.', 'error');
+    if (pass.length < 8) return showAlert('registerAlert', 'La contraseña debe tener al menos 8 caracteres.', 'error');
+
+    setLoading('registerBtn', true);
+    try {
+      const res = await fetch(`${API}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, username: user, password: pass, full_name: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al registrarse');
+      showAlert('registerAlert', '✓ Cuenta creada. Iniciando sesión…', 'success');
+
+      // Auto-login
+      const form = new URLSearchParams({ username: user, password: pass });
+      const loginRes = await fetch(`${API}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form,
+      });
+      const loginData = await loginRes.json();
+      localStorage.setItem('ft_token', loginData.access_token);
+      setTimeout(() => window.location.href = '/dashboard', 800);
+    } catch(e) {
+      showAlert('registerAlert', e.message, 'error');
+    } finally {
+      setLoading('registerBtn', false);
+    }
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('loginPanel').classList.contains('active')) doLogin();
+      else doRegister();
+    }
+  });
+
+  // Redirect if already logged in
+  if (localStorage.getItem('ft_token')) window.location.href = '/dashboard';
+</script>
+</body>
+</html>

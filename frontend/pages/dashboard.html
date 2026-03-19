@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinTrack — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0a0a0f;
+  --ink2:    #13131a;
+  --ink3:    #1c1c26;
+  --border:  #2a2a35;
+  --paper:   #f5f2eb;
+  --muted:   #6b6b72;
+  --accent:  #c8f53a;
+  --danger:  #ff4757;
+  --success: #2ed573;
+  --warn:    #ffa502;
+  --info:    #1e90ff;
+  --mono: 'DM Mono', monospace;
+  --serif: 'DM Serif Display', serif;
+}
+
+html, body { height: 100%; background: var(--ink); color: var(--paper); font-family: var(--mono); overflow: hidden; }
+
+/* ─── Layout ─────────────────────────────────────────── */
+.app { display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
+
+/* ─── Sidebar ────────────────────────────────────────── */
+.sidebar {
+  background: var(--ink2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 1.5rem 0;
+  overflow: hidden;
+}
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.02em;
+}
+
+.logo em { font-style: italic; color: var(--accent); }
+
+.nav { padding: 1rem 0.75rem; flex: 1; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover { background: var(--ink3); color: var(--paper); }
+.nav-item.active { background: rgba(200,245,58,0.08); color: var(--accent); border-color: rgba(200,245,58,0.2); }
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.user-chip {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.avatar {
+  width: 30px; height: 30px;
+  background: var(--accent);
+  color: var(--ink);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 500;
+}
+
+.logout-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-family: var(--mono);
+  font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.4rem 0.75rem; cursor: pointer; border-radius: 2px;
+  transition: all 0.15s; width: 100%;
+}
+.logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ─── Main ────────────────────────────────────────────── */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--ink2);
+  flex-shrink: 0;
+}
+
+.page-title { font-family: var(--serif); font-size: 1.4rem; }
+.page-subtitle { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; margin-top: 1px; }
+
+.topbar-right { display: flex; gap: 0.75rem; align-items: center; }
+
+.btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono);
+  font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.5rem 1rem; cursor: pointer; border-radius: 2px;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-accent {
+  background: var(--accent); border-color: var(--accent);
+  color: var(--ink); font-weight: 500;
+}
+.btn-accent:hover { opacity: 0.85; color: var(--ink); }
+
+/* ─── Content area ────────────────────────────────────── */
+.content {
+  flex: 1; overflow-y: auto; padding: 1.5rem;
+}
+
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Pages ───────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── KPI Cards ───────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.kpi {
+  background: var(--ink2);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+.kpi:hover { background: var(--ink3); }
+
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--kpi-color, var(--border));
+}
+
+.kpi-label {
+  font-size: 0.62rem; color: var(--muted);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.kpi-value {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--kpi-color, var(--paper));
+}
+
+.kpi-sub {
+  font-size: 0.62rem; color: var(--muted);
+  margin-top: 0.4rem; letter-spacing: 0.04em;
+}
+
+/* ─── Charts grid ─────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart-card {
+  background: var(--ink2);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+}
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 0.7rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+.chart-wrap { position: relative; height: 220px; }
+
+/* ─── Transactions table ──────────────────────────────── */
+.table-card {
+  background: var(--ink2);
+  border: 1px solid var(--border);
+}
+
+.table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tx-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.tx-table th {
+  padding: 0.6rem 1.25rem;
+  text-align: left;
+  font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.tx-table td {
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid rgba(42,42,53,0.5);
+  vertical-align: middle;
+}
+
+.tx-table tr:last-child td { border-bottom: none; }
+.tx-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tx-type {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px; font-size: 0.62rem; letter-spacing: 0.06em;
+}
+.tx-type.income { background: rgba(46,213,115,0.1); color: var(--success); }
+.tx-type.expense { background: rgba(255,71,87,0.1); color: var(--danger); }
+.tx-type.transfer { background: rgba(30,144,255,0.1); color: var(--info); }
+
+.amount-income { color: var(--success); }
+.amount-expense { color: var(--danger); }
+
+/* ─── Budgets ─────────────────────────────────────────── */
+.budgets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1rem; }
+
+.budget-card {
+  background: var(--ink2); border: 1px solid var(--border); padding: 1.25rem;
+}
+
+.budget-name { font-size: 0.75rem; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+.budget-cat { font-size: 0.62rem; color: var(--muted); margin-bottom: 1rem; }
+
+.progress-bar {
+  height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 0.75rem;
+}
+
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.budget-stats {
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: var(--muted);
+}
+
+.budget-stats strong { color: var(--paper); }
+
+/* ─── AI Panel ────────────────────────────────────────── */
+.ai-panel {
+  background: var(--ink2); border: 1px solid var(--border); padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+.ai-badge {
+  background: rgba(200,245,58,0.1); border: 1px solid rgba(200,245,58,0.3);
+  color: var(--accent); font-size: 0.62rem; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px;
+}
+
+.ai-question {
+  display: flex; gap: 0.75rem; margin-bottom: 1.25rem;
+}
+
+.ai-question input {
+  flex: 1; background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono); font-size: 0.78rem;
+  padding: 0.65rem 1rem; outline: none; border-radius: 2px;
+  transition: border-color 0.2s;
+}
+.ai-question input:focus { border-color: var(--accent); }
+.ai-question input::placeholder { color: #3a3a45; }
+
+.ai-result {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.ai-insight {
+  font-size: 0.78rem; line-height: 1.8; color: var(--paper);
+  margin-bottom: 1rem; padding: 1rem;
+  background: var(--ink3); border-left: 3px solid var(--accent);
+}
+
+.ai-suggestions { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.ai-suggestion {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  font-size: 0.72rem; color: var(--muted); line-height: 1.6;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.ai-suggestion:last-child { border-bottom: none; }
+.ai-suggestion::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+.ai-loading {
+  display: none; text-align: center; padding: 2rem;
+  font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em;
+}
+
+.ai-loading .dots::after {
+  content: '';
+  animation: dots 1.2s infinite;
+}
+
+@keyframes dots {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+}
+
+/* ─── Accounts page ───────────────────────────────────── */
+.accounts-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 1rem; }
+
+.account-card {
+  background: var(--ink2); border: 1px solid var(--border);
+  padding: 1.25rem; position: relative; overflow: hidden;
+}
+
+.account-card::before {
+  content: '';
+  position: absolute; top:0; left:0; right:0; height:3px;
+  background: var(--acct-color, var(--accent));
+}
+
+.account-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+.account-name { font-size: 0.78rem; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+.account-type { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
+.account-balance { font-family: var(--serif); font-size: 1.5rem; color: var(--accent); }
+.account-currency { font-size: 0.62rem; color: var(--muted); }
+
+/* ─── Modal ───────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--ink2); border: 1px solid var(--border);
+  width: 480px; max-height: 80vh; overflow-y: auto;
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.modal-title { font-family: var(--serif); font-size: 1.1rem; }
+
+.modal-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 1.2rem; cursor: pointer; padding: 0.25rem;
+  line-height: 1; transition: color 0.15s;
+}
+.modal-close:hover { color: var(--paper); }
+
+.modal-body { padding: 1.5rem; }
+
+.form-field { margin-bottom: 1rem; }
+.form-field label { display: block; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem; }
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%; background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono); font-size: 0.82rem;
+  padding: 0.65rem 0.9rem; outline: none; border-radius: 2px;
+  transition: border-color 0.2s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--accent); }
+.form-field select option { background: var(--ink2); }
+.form-field textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 0.75rem; justify-content: flex-end;
+}
+
+/* ─── Empty state ─────────────────────────────────────── */
+.empty {
+  text-align: center; padding: 3rem;
+  font-size: 0.75rem; color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.empty .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+/* ─── Toast ───────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper); font-size: 0.72rem; letter-spacing: 0.04em;
+  padding: 0.75rem 1.25rem; border-radius: 2px;
+  transform: translateY(10px) scale(0.97); opacity: 0;
+  transition: all 0.2s; pointer-events: none; z-index: 200;
+}
+.toast.show { transform: translateY(0) scale(1); opacity: 1; }
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+
+/* scroll */
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* month selector */
+.month-select {
+  background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono); font-size: 0.7rem;
+  padding: 0.35rem 0.65rem; outline: none; cursor: pointer; border-radius: 2px;
+}
+.month-select option { background: var(--ink2); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">Fin<em>Track</em></div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="goPage('overview')">
+        <span class="icon">◈</span> Resumen
+      </div>
+      <div class="nav-item" onclick="goPage('transactions')">
+        <span class="icon">⇄</span> Transacciones
+      </div>
+      <div class="nav-item" onclick="goPage('accounts')">
+        <span class="icon">◻</span> Cuentas
+      </div>
+      <div class="nav-item" onclick="goPage('budgets')">
+        <span class="icon">◎</span> Presupuestos
+      </div>
+      <div class="nav-item" onclick="goPage('ai')">
+        <span class="icon">✦</span> IA Insights
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="avatarEl">?</div>
+        <div>
+          <div style="font-size:0.72rem" id="userNameEl">…</div>
+          <div style="font-size:0.6rem;color:var(--muted)" id="userEmailEl">…</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">⎋ Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="pageTitle">Resumen</div>
+        <div class="page-subtitle" id="pageSubtitle">Vista general de tus finanzas</div>
+      </div>
+      <div class="topbar-right">
+        <select class="month-select" id="monthSelect" onchange="onMonthChange()"></select>
+        <button class="btn btn-accent" onclick="openTxModal()">+ Nueva transacción</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── OVERVIEW PAGE ── -->
+      <div id="page-overview" class="page active">
+        <div class="kpi-grid">
+          <div class="kpi" style="--kpi-color:var(--success)">
+            <div class="kpi-label">Ingresos del mes</div>
+            <div class="kpi-value" id="kpi-income">$0</div>
+            <div class="kpi-sub" id="kpi-income-count">0 transacciones</div>
+          </div>
+          <div class="kpi" style="--kpi-color:var(--danger)">
+            <div class="kpi-label">Gastos del mes</div>
+            <div class="kpi-value" id="kpi-expense">$0</div>
+            <div class="kpi-sub" id="kpi-expense-count">0 transacciones</div>
+          </div>
+          <div class="kpi" style="--kpi-color:var(--accent)">
+            <div class="kpi-label">Balance neto</div>
+            <div class="kpi-value" id="kpi-balance">$0</div>
+            <div class="kpi-sub" id="kpi-savings-rate">Tasa de ahorro: 0%</div>
+          </div>
+          <div class="kpi" style="--kpi-color:var(--info)">
+            <div class="kpi-label">Total en cuentas</div>
+            <div class="kpi-value" id="kpi-total">$0</div>
+            <div class="kpi-sub" id="kpi-accounts-count">0 cuentas activas</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="card-header">
+              <div class="card-title">Tendencia mensual</div>
+            </div>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="card-header">
+              <div class="card-title">Gastos por categoría</div>
+            </div>
+            <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="card-title">Transacciones recientes</div>
+            <button class="btn" onclick="goPage('transactions')">Ver todas →</button>
+          </div>
+          <table class="tx-table">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th>Categoría</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th style="text-align:right">Monto</th>
+              </tr>
+            </thead>
+            <tbody id="recentTxBody">
+              <tr><td colspan="5" class="empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── TRANSACTIONS PAGE ── -->
+      <div id="page-transactions" class="page">
+        <div class="table-card">
+          <div class="table-header">
+            <div class="card-title" id="txPageCount">Todas las transacciones</div>
+            <div style="display:flex;gap:0.5rem">
+              <select class="month-select" id="txTypeFilter" onchange="loadTransactions()">
+                <option value="">Todos los tipos</option>
+                <option value="income">Ingresos</option>
+                <option value="expense">Gastos</option>
+                <option value="transfer">Transferencias</option>
+              </select>
+              <button class="btn btn-accent" onclick="openTxModal()">+ Nueva</button>
+            </div>
+          </div>
+          <table class="tx-table">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th>Cuenta</th>
+                <th>Categoría</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th style="text-align:right">Monto</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="txTableBody">
+              <tr><td colspan="7" class="empty">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ACCOUNTS PAGE ── -->
+      <div id="page-accounts" class="page">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button class="btn btn-accent" onclick="openAccountModal()">+ Nueva cuenta</button>
+        </div>
+        <div class="accounts-grid" id="accountsGrid">
+          <div class="empty"><div class="empty-icon">🏦</div>Cargando cuentas…</div>
+        </div>
+      </div>
+
+      <!-- ── BUDGETS PAGE ── -->
+      <div id="page-budgets" class="page">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button class="btn btn-accent" onclick="openBudgetModal()">+ Nuevo presupuesto</button>
+        </div>
+        <div class="budgets-grid" id="budgetsGrid">
+          <div class="empty"><div class="empty-icon">◎</div>Cargando presupuestos…</div>
+        </div>
+      </div>
+
+      <!-- ── AI PAGE ── -->
+      <div id="page-ai" class="page">
+        <div class="ai-panel">
+          <div class="ai-header">
+            <div class="card-title">Asistente Financiero</div>
+            <span class="ai-badge">✦ Claude AI</span>
+          </div>
+          <div class="ai-question">
+            <input id="aiQuestion" type="text" placeholder="¿Cómo puedo ahorrar más este mes? ¿En qué gasto más?"/>
+            <button class="btn btn-accent" onclick="askAI()">Analizar →</button>
+          </div>
+          <div class="ai-loading" id="aiLoading">
+            <span>Analizando tus finanzas</span><span class="dots"></span>
+          </div>
+          <div class="ai-result" id="aiResult">
+            <div class="ai-insight" id="aiInsight"></div>
+            <div class="ai-suggestions" id="aiSuggestions"></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header"><div class="card-title">Distribución de gastos</div></div>
+          <div class="chart-wrap"><canvas id="aiDonut"></canvas></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── TRANSACTION MODAL ── -->
+<div class="modal-overlay" id="txModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva transacción</div>
+      <button class="modal-close" onclick="closeModal('txModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Tipo</label>
+        <select id="txType" onchange="onTxTypeChange()">
+          <option value="expense">Gasto</option>
+          <option value="income">Ingreso</option>
+          <option value="transfer">Transferencia</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Monto (COP)</label>
+          <input id="txAmount" type="number" placeholder="150000" min="1"/>
+        </div>
+        <div class="form-field">
+          <label>Fecha</label>
+          <input id="txDate" type="datetime-local"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Cuenta origen</label>
+        <select id="txAccount"></select>
+      </div>
+      <div class="form-field" id="txDestField" style="display:none">
+        <label>Cuenta destino</label>
+        <select id="txDest"></select>
+      </div>
+      <div class="form-field" id="txCatField">
+        <label>Categoría</label>
+        <select id="txCategory"></select>
+      </div>
+      <div class="form-field">
+        <label>Descripción</label>
+        <input id="txDesc" type="text" placeholder="Ej: Almuerzo con clientes"/>
+      </div>
+      <div class="form-field">
+        <label>Notas (opcional)</label>
+        <textarea id="txNotes" placeholder="Detalles adicionales…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('txModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveTx()">Guardar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ACCOUNT MODAL ── -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva cuenta</div>
+      <button class="modal-close" onclick="closeModal('accountModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Nombre</label>
+        <input id="acctName" type="text" placeholder="Cuenta Nequi"/>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Tipo</label>
+          <select id="acctType">
+            <option value="checking">Corriente</option>
+            <option value="savings">Ahorros</option>
+            <option value="cash">Efectivo</option>
+            <option value="credit">Crédito</option>
+            <option value="investment">Inversión</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Saldo inicial (COP)</label>
+          <input id="acctBalance" type="number" placeholder="0" min="0"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Ícono</label>
+          <input id="acctIcon" type="text" placeholder="💳" maxlength="4"/>
+        </div>
+        <div class="form-field">
+          <label>Color</label>
+          <input id="acctColor" type="color" value="#6366f1" style="height:40px;padding:4px"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('accountModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveAccount()">Crear →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── BUDGET MODAL ── -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo presupuesto</div>
+      <button class="modal-close" onclick="closeModal('budgetModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Nombre</label>
+        <input id="budgetName" type="text" placeholder="Presupuesto Alimentación"/>
+      </div>
+      <div class="form-field">
+        <label>Categoría de gasto</label>
+        <select id="budgetCat"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Monto límite (COP)</label>
+          <input id="budgetAmount" type="number" placeholder="600000" min="1"/>
+        </div>
+        <div class="form-field">
+          <label>Período</label>
+          <select id="budgetPeriod">
+            <option value="monthly">Mensual</option>
+            <option value="weekly">Semanal</option>
+            <option value="yearly">Anual</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Alerta al llegar al (%)</label>
+        <input id="budgetAlert" type="number" placeholder="80" min="1" max="100"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('budgetModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveBudget()">Crear →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CORE
+// ═══════════════════════════════════════════════════════════
+const API = '';
+const token = () => localStorage.getItem('ft_token');
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token()}`,
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) { doLogout(); return; }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Error desconocido' }));
+    throw new Error(err.detail || 'Error');
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function fmtCOP(n) {
+  if (!n && n !== 0) return '$0';
+  return '$' + Math.abs(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'2-digit' });
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function doLogout() {
+  localStorage.removeItem('ft_token');
+  window.location.href = '/';
+}
+
+if (!token()) window.location.href = '/';
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let accounts = [], categories = [], currentMonth, currentYear;
+let trendChart = null, categoryChart = null, aiDonut = null;
+
+function initMonthSelector() {
+  const sel = document.getElementById('monthSelect');
+  const now = new Date();
+  currentMonth = now.getMonth() + 1;
+  currentYear = now.getFullYear();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const opt = document.createElement('option');
+    opt.value = `${d.getFullYear()}-${d.getMonth()+1}`;
+    opt.textContent = d.toLocaleDateString('es-CO', { month:'long', year:'numeric' });
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function onMonthChange() {
+  const [y, m] = document.getElementById('monthSelect').value.split('-');
+  currentYear = +y; currentMonth = +m;
+  loadOverviewData();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const pageTitles = {
+  overview:     ['Resumen', 'Vista general de tus finanzas'],
+  transactions: ['Transacciones', 'Historial completo de movimientos'],
+  accounts:     ['Cuentas', 'Gestiona tus cuentas y saldos'],
+  budgets:      ['Presupuestos', 'Control de límites de gasto'],
+  ai:           ['IA Insights', 'Análisis inteligente con Claude'],
+};
+
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick').includes(name)) n.classList.add('active');
+  });
+  const [title, sub] = pageTitles[name];
+  document.getElementById('pageTitle').textContent = title;
+  document.getElementById('pageSubtitle').textContent = sub;
+
+  if (name === 'transactions') loadTransactions();
+  if (name === 'accounts') renderAccounts();
+  if (name === 'budgets') loadBudgets();
+  if (name === 'ai') loadAIPage();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOTSTRAP
+// ═══════════════════════════════════════════════════════════
+async function bootstrap() {
+  // Load user
+  const user = await apiFetch('/api/v1/auth/me').catch(() => null);
+  if (!user) return doLogout();
+  const initials = (user.full_name || user.username).substring(0, 2).toUpperCase();
+  document.getElementById('avatarEl').textContent = initials;
+  document.getElementById('userNameEl').textContent = user.full_name || user.username;
+  document.getElementById('userEmailEl').textContent = user.email;
+
+  initMonthSelector();
+  await Promise.all([loadAccounts(), loadCategories()]);
+  await loadOverviewData();
+}
+
+async function loadAccounts() {
+  accounts = await apiFetch('/api/v1/accounts').catch(() => []);
+}
+
+async function loadCategories() {
+  categories = await apiFetch('/api/v1/categories').catch(() => []);
+}
+
+// ═══════════════════════════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════════════════════════
+async function loadOverviewData() {
+  const [summary, byCat, trend, txList] = await Promise.all([
+    apiFetch(`/api/v1/transactions/summary?year=${currentYear}&month=${currentMonth}`),
+    apiFetch(`/api/v1/transactions/by-category?year=${currentYear}&month=${currentMonth}`),
+    apiFetch('/api/v1/transactions/monthly-trend?months=6'),
+    apiFetch('/api/v1/transactions?limit=8'),
+  ]);
+
+  // KPIs
+  document.getElementById('kpi-income').textContent = fmtCOP(summary.income);
+  document.getElementById('kpi-expense').textContent = fmtCOP(summary.expense);
+  document.getElementById('kpi-balance').textContent = fmtCOP(summary.balance);
+  document.getElementById('kpi-income-count').textContent = `${summary.income_count} transacciones`;
+  document.getElementById('kpi-expense-count').textContent = `${summary.expense_count} transacciones`;
+  const savings = summary.income > 0 ? ((summary.income - summary.expense) / summary.income * 100).toFixed(1) : 0;
+  document.getElementById('kpi-savings-rate').textContent = `Tasa de ahorro: ${savings}%`;
+
+  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+  document.getElementById('kpi-total').textContent = fmtCOP(totalBalance);
+  document.getElementById('kpi-accounts-count').textContent = `${accounts.length} cuentas activas`;
+
+  renderTrendChart(trend);
+  renderCategoryChart(byCat);
+  renderRecentTx(txList);
+}
+
+function renderTrendChart(data) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => {
+        const [y,m] = d.period.split('-');
+        return new Date(y, m-1).toLocaleDateString('es-CO', { month:'short' });
+      }),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: data.map(d => d.income),
+          backgroundColor: 'rgba(46,213,115,0.7)',
+          borderRadius: 2,
+        },
+        {
+          label: 'Gastos',
+          data: data.map(d => d.expense),
+          backgroundColor: 'rgba(255,71,87,0.7)',
+          borderRadius: 2,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#6b6b72', font: { family: 'DM Mono', size: 11 } } },
+        tooltip: {
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtCOP(ctx.raw)} COP` }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(42,42,53,0.8)' }, ticks: { color: '#6b6b72', font: { family: 'DM Mono', size: 10 } } },
+        y: { grid: { color: 'rgba(42,42,53,0.8)' }, ticks: { color: '#6b6b72', font: { family: 'DM Mono', size: 10 },
+          callback: v => '$' + (v/1000000).toFixed(1) + 'M' } },
+      }
+    }
+  });
+}
+
+function renderCategoryChart(data) {
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  if (categoryChart) categoryChart.destroy();
+  if (!data.length) return;
+  categoryChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.icon + ' ' + d.name),
+      datasets: [{ data: data.map(d => d.total), backgroundColor: data.map(d => d.color), borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#6b6b72', font: { family: 'DM Mono', size: 10 }, boxWidth: 10 } },
+        tooltip: { callbacks: { label: ctx => ` ${fmtCOP(ctx.raw)} COP` } }
+      }
+    }
+  });
+}
+
+function renderRecentTx(txList) {
+  const tbody = document.getElementById('recentTxBody');
+  if (!txList || !txList.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">⇄</div>Sin transacciones aún</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = txList.map(tx => `
+    <tr>
+      <td>${tx.description || '—'}</td>
+      <td>${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
+      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Transferencia'}[tx.transaction_type]}</span></td>
+      <td>${fmtDate(tx.date)}</td>
+      <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
+        ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRANSACTIONS PAGE
+// ═══════════════════════════════════════════════════════════
+async function loadTransactions() {
+  const typeFilter = document.getElementById('txTypeFilter').value;
+  let url = `/api/v1/transactions?limit=100`;
+  if (typeFilter) url += `&transaction_type=${typeFilter}`;
+
+  const txList = await apiFetch(url).catch(() => []);
+  document.getElementById('txPageCount').textContent = `${txList.length} transacciones`;
+
+  const tbody = document.getElementById('txTableBody');
+  if (!txList.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Sin transacciones</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = txList.map(tx => `
+    <tr>
+      <td>${tx.description || '—'}</td>
+      <td>${tx.account ? tx.account.icon + ' ' + tx.account.name : '—'}</td>
+      <td>${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
+      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Transferencia'}[tx.transaction_type]}</span></td>
+      <td>${fmtDate(tx.date)}</td>
+      <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
+        ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
+      </td>
+      <td>
+        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.6rem" onclick="deleteTx(${tx.id})">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function deleteTx(id) {
+  if (!confirm('¿Eliminar esta transacción?')) return;
+  await apiFetch(`/api/v1/transactions/${id}`, { method: 'DELETE' });
+  showToast('Transacción eliminada');
+  await loadAccounts();
+  loadTransactions();
+  loadOverviewData();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNTS PAGE
+// ═══════════════════════════════════════════════════════════
+function renderAccounts() {
+  const grid = document.getElementById('accountsGrid');
+  if (!accounts.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🏦</div>No hay cuentas aún</div>';
+    return;
+  }
+  grid.innerHTML = accounts.map(a => `
+    <div class="account-card" style="--acct-color:${a.color}">
+      <div class="account-icon">${a.icon}</div>
+      <div class="account-name">${a.name}</div>
+      <div class="account-type">${{checking:'Corriente',savings:'Ahorros',cash:'Efectivo',credit:'Crédito',investment:'Inversión'}[a.account_type] || a.account_type}</div>
+      <div class="account-balance">${fmtCOP(a.balance)}</div>
+      <div class="account-currency">${a.currency}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUDGETS PAGE
+// ═══════════════════════════════════════════════════════════
+async function loadBudgets() {
+  const budgets = await apiFetch('/api/v1/budgets').catch(() => []);
+  const grid = document.getElementById('budgetsGrid');
+  if (!budgets.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">◎</div>Sin presupuestos. Crea uno para controlar tus gastos.</div>';
+    return;
+  }
+  grid.innerHTML = budgets.map(b => {
+    const pct = Math.min(b.percentage_used, 100);
+    const color = pct >= 100 ? 'var(--danger)' : pct >= b.alert_threshold * 100 ? 'var(--warn)' : 'var(--success)';
+    return `
+      <div class="budget-card">
+        <div class="budget-name">${b.name}</div>
+        <div class="budget-cat">${b.category ? b.category.icon + ' ' + b.category.name : ''} · ${b.period}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="budget-stats">
+          <span>Gastado: <strong style="color:${color}">${fmtCOP(b.spent)}</strong></span>
+          <span>Límite: <strong>${fmtCOP(b.amount)}</strong></span>
+        </div>
+        <div style="margin-top:0.5rem;font-size:0.62rem;color:${color}">${pct.toFixed(1)}% utilizado</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI PAGE
+// ═══════════════════════════════════════════════════════════
+async function loadAIPage() {
+  const byCat = await apiFetch(`/api/v1/transactions/by-category?year=${currentYear}&month=${currentMonth}`).catch(() => []);
+  const ctx = document.getElementById('aiDonut').getContext('2d');
+  if (aiDonut) aiDonut.destroy();
+  if (byCat.length) {
+    aiDonut = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: byCat.map(d => d.icon + ' ' + d.name),
+        datasets: [{ data: byCat.map(d => d.total), backgroundColor: byCat.map(d => d.color), borderWidth: 0, hoverOffset: 10 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { color: '#6b6b72', font: { family: 'DM Mono', size: 11 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: ctx => ` ${fmtCOP(ctx.raw)} COP (${(ctx.parsed/(byCat.reduce((s,d)=>s+d.total,0))*100).toFixed(1)}%)` } }
+        }
+      }
+    });
+  }
+}
+
+async function askAI() {
+  const question = document.getElementById('aiQuestion').value.trim();
+  const loading = document.getElementById('aiLoading');
+  const result = document.getElementById('aiResult');
+
+  loading.style.display = 'block';
+  result.style.display = 'none';
+
+  try {
+    const data = await apiFetch('/api/v1/ai/insights', {
+      method: 'POST',
+      body: JSON.stringify({ question: question || null }),
+    });
+    document.getElementById('aiInsight').textContent = data.insight;
+    document.getElementById('aiSuggestions').innerHTML = data.suggestions
+      .map(s => `<div class="ai-suggestion">${s}</div>`)
+      .join('');
+    result.style.display = 'block';
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── TX MODAL ──
+function openTxModal() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('txDate').value = now.toISOString().slice(0,16);
+
+  const acctSel = document.getElementById('txAccount');
+  const destSel = document.getElementById('txDest');
+  acctSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name} (${fmtCOP(a.balance)})</option>`).join('');
+  destSel.innerHTML = acctSel.innerHTML;
+
+  const catSel = document.getElementById('txCategory');
+  const expCats = categories.filter(c => c.transaction_type === 'expense');
+  catSel.innerHTML = expCats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
+  document.getElementById('txType').value = 'expense';
+  document.getElementById('txAmount').value = '';
+  document.getElementById('txDesc').value = '';
+  document.getElementById('txNotes').value = '';
+
+  onTxTypeChange();
+  openModal('txModal');
+}
+
+function onTxTypeChange() {
+  const type = document.getElementById('txType').value;
+  const destField = document.getElementById('txDestField');
+  const catField = document.getElementById('txCatField');
+  const catSel = document.getElementById('txCategory');
+
+  destField.style.display = type === 'transfer' ? 'block' : 'none';
+  catField.style.display = type === 'transfer' ? 'none' : 'block';
+
+  if (type !== 'transfer') {
+    const cats = categories.filter(c => c.transaction_type === type);
+    catSel.innerHTML = cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  }
+}
+
+async function saveTx() {
+  const type = document.getElementById('txType').value;
+  const amount = parseFloat(document.getElementById('txAmount').value);
+  const accountId = parseInt(document.getElementById('txAccount').value);
+  const date = document.getElementById('txDate').value;
+  const desc = document.getElementById('txDesc').value.trim();
+  const notes = document.getElementById('txNotes').value.trim();
+
+  if (!amount || amount <= 0) return showToast('Ingresa un monto válido', 'error');
+  if (!accountId) return showToast('Selecciona una cuenta', 'error');
+
+  const payload = {
+    transaction_type: type,
+    amount,
+    account_id: accountId,
+    date: date ? new Date(date).toISOString() : null,
+    description: desc || null,
+    notes: notes || null,
+  };
+
+  if (type === 'transfer') {
+    payload.destination_account_id = parseInt(document.getElementById('txDest').value);
+  } else {
+    payload.category_id = parseInt(document.getElementById('txCategory').value) || null;
+  }
+
+  try {
+    await apiFetch('/api/v1/transactions', { method: 'POST', body: JSON.stringify(payload) });
+    showToast('Transacción guardada ✓');
+    closeModal('txModal');
+    await loadAccounts();
+    loadOverviewData();
+    if (document.getElementById('page-transactions').classList.contains('active')) loadTransactions();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── ACCOUNT MODAL ──
+function openAccountModal() {
+  document.getElementById('acctName').value = '';
+  document.getElementById('acctBalance').value = '0';
+  document.getElementById('acctIcon').value = '💳';
+  openModal('accountModal');
+}
+
+async function saveAccount() {
+  const name = document.getElementById('acctName').value.trim();
+  const balance = parseFloat(document.getElementById('acctBalance').value) || 0;
+  const account_type = document.getElementById('acctType').value;
+  const icon = document.getElementById('acctIcon').value || '💳';
+  const color = document.getElementById('acctColor').value;
+
+  if (!name) return showToast('Ingresa un nombre', 'error');
+
+  try {
+    await apiFetch('/api/v1/accounts', { method: 'POST', body: JSON.stringify({ name, balance, account_type, icon, color, currency: 'COP' }) });
+    showToast('Cuenta creada ✓');
+    closeModal('accountModal');
+    await loadAccounts();
+    renderAccounts();
+    loadOverviewData();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── BUDGET MODAL ──
+function openBudgetModal() {
+  const catSel = document.getElementById('budgetCat');
+  const expCats = categories.filter(c => c.transaction_type === 'expense');
+  catSel.innerHTML = expCats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  document.getElementById('budgetName').value = '';
+  document.getElementById('budgetAmount').value = '';
+  document.getElementById('budgetAlert').value = '80';
+  openModal('budgetModal');
+}
+
+async function saveBudget() {
+  const name = document.getElementById('budgetName').value.trim();
+  const amount = parseFloat(document.getElementById('budgetAmount').value);
+  const category_id = parseInt(document.getElementById('budgetCat').value);
+  const period = document.getElementById('budgetPeriod').value;
+  const alert_threshold = (parseFloat(document.getElementById('budgetAlert').value) || 80) / 100;
+
+  if (!name) return showToast('Ingresa un nombre', 'error');
+  if (!amount || amount <= 0) return showToast('Ingresa un monto válido', 'error');
+
+  try {
+    await apiFetch('/api/v1/budgets', { method: 'POST', body: JSON.stringify({ name, amount, category_id, period, alert_threshold }) });
+    showToast('Presupuesto creado ✓');
+    closeModal('budgetModal');
+    loadBudgets();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+bootstrap();
+</script>
+
+<!-- ── AI CHAT FLOTANTE ──────────────────────────────────────────────────── -->
+<style>
+.chat-fab {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; z-index: 999;
+  box-shadow: 0 4px 20px rgba(200,245,58,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(200,245,58,0.5); }
+
+.chat-panel {
+  position: fixed; bottom: 5rem; right: 1.5rem;
+  width: 370px; height: 520px;
+  background: var(--ink2); border: 1px solid var(--border);
+  border-radius: 8px; display: none; flex-direction: column;
+  z-index: 998; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: chatIn 0.2s ease;
+}
+.chat-panel.open { display: flex; }
+
+@keyframes chatIn {
+  from { opacity:0; transform: translateY(10px) scale(0.97); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+.chat-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.chat-header-left { display: flex; align-items: center; gap: 0.6rem; }
+.chat-title { font-size: 0.78rem; letter-spacing: 0.06em; }
+.chat-status {
+  font-size: 0.6rem; color: var(--success);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+.chat-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 1rem; cursor: pointer; transition: color 0.15s;
+}
+.chat-close:hover { color: var(--paper); }
+
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 1rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.chat-messages::-webkit-scrollbar { width: 3px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+.chat-bubble {
+  max-width: 85%; padding: 0.6rem 0.9rem;
+  font-size: 0.78rem; line-height: 1.6; border-radius: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+.chat-bubble.user {
+  background: rgba(200,245,58,0.12);
+  border: 1px solid rgba(200,245,58,0.2);
+  color: var(--paper); align-self: flex-end;
+}
+
+.chat-bubble.bot {
+  background: var(--ink3);
+  border: 1px solid var(--border);
+  color: var(--paper); align-self: flex-start;
+}
+
+.chat-bubble.bot.success {
+  border-left: 3px solid var(--success);
+}
+
+.chat-tx-confirm {
+  margin-top: 0.4rem; font-size: 0.68rem;
+  color: var(--success); letter-spacing: 0.04em;
+}
+
+.chat-input-row {
+  display: flex; gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1; background: var(--ink3);
+  border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono);
+  font-size: 0.78rem; padding: 0.6rem 0.8rem;
+  outline: none; border-radius: 2px;
+  transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: var(--accent); }
+.chat-input::placeholder { color: #3a3a45; font-size: 0.72rem; }
+
+.chat-send {
+  background: var(--accent); border: none;
+  color: var(--ink); font-size: 0.9rem;
+  width: 36px; height: 36px; border-radius: 2px;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.chat-send:hover { opacity: 0.85; }
+.chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.chat-typing {
+  display: none; align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  background: var(--ink3); border: 1px solid var(--border);
+  border-radius: 4px; font-size: 0.72rem; color: var(--muted);
+}
+.chat-typing.show { display: block; }
+.chat-typing::after {
+  content: '';
+  animation: dots 1.2s infinite;
+}
+@keyframes dots {
+  0%  { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+
+.chat-suggestions {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0 1rem 0.75rem;
+}
+.chat-suggestion-btn {
+  background: var(--ink3); border: 1px solid var(--border);
+  color: var(--muted); font-family: var(--mono);
+  font-size: 0.62rem; letter-spacing: 0.04em;
+  padding: 0.3rem 0.6rem; border-radius: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.chat-suggestion-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Mobile fullscreen */
+@media (max-width: 480px) {
+  .chat-panel {
+    bottom: 0; right: 0; left: 0;
+    width: 100%; height: 85vh;
+    border-radius: 12px 12px 0 0;
+  }
+  .chat-fab { bottom: 1rem; right: 1rem; }
+}
+</style>
+
+<!-- Botón flotante -->
+<button class="chat-fab" onclick="toggleChat()" id="chatFab">💬</button>
+
+<!-- Panel de chat -->
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <span style="font-size:1rem">✦</span>
+      <div>
+        <div class="chat-title">Asistente FinTrack</div>
+        <div class="chat-status">● en línea</div>
+      </div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-bubble bot">
+      Hola 👋 Puedo registrar tus gastos e ingresos, o responder preguntas sobre tus finanzas.<br/><br/>
+      Prueba: <em>"Rappi 45000"</em> o <em>"¿en qué gasto más?"</em>
+    </div>
+  </div>
+
+  <div class="chat-typing" id="chatTyping">Analizando</div>
+
+  <div class="chat-suggestions" id="chatSuggestions">
+    <button class="chat-suggestion-btn" onclick="sendSuggestion('¿En qué estoy gastando más?')">¿En qué gasto más?</button>
+    <button class="chat-suggestion-btn" onclick="sendSuggestion('¿Cuánto llevo ahorrado este mes?')">¿Cuánto ahorré?</button>
+    <button class="chat-suggestion-btn" onclick="sendSuggestion('¿Cómo van mis presupuestos?')">Mis presupuestos</button>
+  </div>
+
+  <div class="chat-input-row">
+    <input
+      class="chat-input"
+      id="chatInput"
+      type="text"
+      placeholder="Rappi 45000 · ¿en qué gasto más?"
+      autocomplete="off"
+    />
+    <button class="chat-send" id="chatSendBtn" onclick="sendChat()">→</button>
+  </div>
+</div>
+
+<script>
+// ── Chat state ──────────────────────────────────────────────────────────────
+const chatHistory = [];
+
+function toggleChat() {
+  const panel = document.getElementById('chatPanel');
+  const fab = document.getElementById('chatFab');
+  const isOpen = panel.classList.toggle('open');
+  fab.textContent = isOpen ? '✕' : '💬';
+  if (isOpen) {
+    setTimeout(() => document.getElementById('chatInput').focus(), 100);
+    scrollChatBottom();
+  }
+}
+
+function scrollChatBottom() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendMessage(text, role, txConfirm = null) {
+  const msgs = document.getElementById('chatMessages');
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role}${txConfirm ? ' success' : ''}`;
+  bubble.innerHTML = text.replace(/\n/g, '<br/>');
+  if (txConfirm) {
+    const conf = document.createElement('div');
+    conf.className = 'chat-tx-confirm';
+    conf.textContent = `✓ Registrado: ${txConfirm.description} — $${txConfirm.amount.toLocaleString('es-CO')} COP`;
+    bubble.appendChild(conf);
+  }
+  msgs.appendChild(bubble);
+  scrollChatBottom();
+}
+
+function setTyping(show) {
+  document.getElementById('chatTyping').classList.toggle('show', show);
+  document.getElementById('chatSendBtn').disabled = show;
+  scrollChatBottom();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  document.getElementById('chatSuggestions').style.display = 'none';
+  appendMessage(message, 'user');
+  chatHistory.push({ role: 'user', content: message });
+  setTyping(true);
+
+  try {
+    const res = await apiFetch('/api/v1/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history: chatHistory.slice(-6) }),
+    });
+
+    setTyping(false);
+    appendMessage(res.reply, 'bot', res.transaction_created || null);
+    chatHistory.push({ role: 'assistant', content: res.reply });
+
+    // Refresh dashboard si se creó una transacción
+    if (res.transaction_created) {
+      await loadAccounts();
+      loadOverviewData();
+    }
+  } catch(e) {
+    setTyping(false);
+    appendMessage('Error al conectar. Intenta de nuevo.', 'bot');
+  }
+}
+
+function sendSuggestion(text) {
+  document.getElementById('chatInput').value = text;
+  sendChat();
+}
+
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChat();
+});
+</script>
+</body>
+</html>
