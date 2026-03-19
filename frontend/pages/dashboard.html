@@ -24,6 +24,7 @@
   --info:    #1e90ff;
   --mono: 'DM Mono', monospace;
   --serif: 'DM Serif Display', serif;
+  --bottom-nav-h: 64px;
 }
 
 html, body { height: 100%; background: var(--ink); color: var(--paper); font-family: var(--mono); overflow: hidden; }
@@ -47,7 +48,6 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   border-bottom: 1px solid var(--border);
   letter-spacing: -0.02em;
 }
-
 .logo em { font-style: italic; color: var(--accent); }
 
 .nav { padding: 1rem 0.75rem; flex: 1; }
@@ -65,7 +65,6 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   margin-bottom: 2px;
   border: 1px solid transparent;
 }
-
 .nav-item:hover { background: var(--ink3); color: var(--paper); }
 .nav-item.active { background: rgba(200,245,58,0.08); color: var(--accent); border-color: rgba(200,245,58,0.2); }
 .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
@@ -77,15 +76,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   color: var(--muted);
 }
 
-.user-chip {
-  display: flex; align-items: center; gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
+.user-chip { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
 
 .avatar {
   width: 30px; height: 30px;
-  background: var(--accent);
-  color: var(--ink);
+  background: var(--accent); color: var(--ink);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.75rem; font-weight: 500;
@@ -99,6 +94,35 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   transition: all 0.15s; width: 100%;
 }
 .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ─── Bottom nav (mobile only) ───────────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bottom-nav-h);
+  background: var(--ink2);
+  border-top: 1px solid var(--border);
+  z-index: 500;
+  align-items: stretch;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+  border: none; background: none; font-family: var(--mono);
+  padding: 8px 4px;
+}
+.bottom-nav-item .bn-icon { font-size: 1.1rem; line-height: 1; }
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item:active { opacity: 0.7; }
 
 /* ─── Main ────────────────────────────────────────────── */
 .main { display: flex; flex-direction: column; overflow: hidden; }
@@ -116,6 +140,16 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 
 .topbar-right { display: flex; gap: 0.75rem; align-items: center; }
 
+/* Hamburger — solo visible en mobile */
+.menu-btn {
+  display: none;
+  background: none; border: 1px solid var(--border);
+  color: var(--paper); width: 36px; height: 36px;
+  border-radius: 2px; cursor: pointer;
+  font-size: 1rem; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
 .btn {
   background: none; border: 1px solid var(--border);
   color: var(--paper); font-family: var(--mono);
@@ -125,17 +159,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
-.btn-accent {
-  background: var(--accent); border-color: var(--accent);
-  color: var(--ink); font-weight: 500;
-}
+.btn-accent { background: var(--accent); border-color: var(--accent); color: var(--ink); font-weight: 500; }
 .btn-accent:hover { opacity: 0.85; color: var(--ink); }
 
 /* ─── Content area ────────────────────────────────────── */
-.content {
-  flex: 1; overflow-y: auto; padding: 1.5rem;
-}
-
+.content { flex: 1; overflow-y: auto; padding: 1.5rem; }
 .content::-webkit-scrollbar { width: 4px; }
 .content::-webkit-scrollbar-track { background: transparent; }
 .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -157,37 +185,19 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 .kpi {
   background: var(--ink2);
   padding: 1.25rem 1.5rem;
-  position: relative;
-  overflow: hidden;
+  position: relative; overflow: hidden;
   transition: background 0.2s;
 }
 .kpi:hover { background: var(--ink3); }
-
 .kpi::before {
   content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: var(--kpi-color, var(--border));
 }
 
-.kpi-label {
-  font-size: 0.62rem; color: var(--muted);
-  letter-spacing: 0.12em; text-transform: uppercase;
-  margin-bottom: 0.6rem;
-}
-
-.kpi-value {
-  font-family: var(--serif);
-  font-size: 1.7rem;
-  line-height: 1;
-  color: var(--kpi-color, var(--paper));
-}
-
-.kpi-sub {
-  font-size: 0.62rem; color: var(--muted);
-  margin-top: 0.4rem; letter-spacing: 0.04em;
-}
+.kpi-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.kpi-value { font-family: var(--serif); font-size: 1.7rem; line-height: 1; color: var(--kpi-color, var(--paper)); }
+.kpi-sub { font-size: 0.62rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.04em; }
 
 /* ─── Charts grid ─────────────────────────────────────── */
 .charts-grid {
@@ -208,18 +218,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   margin-bottom: 1rem;
 }
 
-.card-title {
-  font-size: 0.7rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted);
-}
-
+.card-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .chart-wrap { position: relative; height: 220px; }
 
 /* ─── Transactions table ──────────────────────────────── */
-.table-card {
-  background: var(--ink2);
-  border: 1px solid var(--border);
-}
+.table-card { background: var(--ink2); border: 1px solid var(--border); }
 
 .table-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -232,17 +235,13 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   padding: 0.6rem 1.25rem;
   text-align: left;
   font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-  font-weight: 400;
+  color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 400;
 }
-
 .tx-table td {
   padding: 0.7rem 1.25rem;
   border-bottom: 1px solid rgba(42,42,53,0.5);
   vertical-align: middle;
 }
-
 .tx-table tr:last-child td { border-bottom: none; }
 .tx-table tr:hover td { background: rgba(255,255,255,0.02); }
 
@@ -251,69 +250,44 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   padding: 0.2rem 0.6rem;
   border-radius: 2px; font-size: 0.62rem; letter-spacing: 0.06em;
 }
-.tx-type.income { background: rgba(46,213,115,0.1); color: var(--success); }
-.tx-type.expense { background: rgba(255,71,87,0.1); color: var(--danger); }
-.tx-type.transfer { background: rgba(30,144,255,0.1); color: var(--info); }
+.tx-type.income  { background: rgba(46,213,115,0.1); color: var(--success); }
+.tx-type.expense { background: rgba(255,71,87,0.1);  color: var(--danger); }
+.tx-type.transfer{ background: rgba(30,144,255,0.1); color: var(--info); }
 
-.amount-income { color: var(--success); }
+.amount-income  { color: var(--success); }
 .amount-expense { color: var(--danger); }
 
 /* ─── Budgets ─────────────────────────────────────────── */
 .budgets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1rem; }
 
-.budget-card {
-  background: var(--ink2); border: 1px solid var(--border); padding: 1.25rem;
-}
-
+.budget-card { background: var(--ink2); border: 1px solid var(--border); padding: 1.25rem; }
 .budget-name { font-size: 0.75rem; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
-.budget-cat { font-size: 0.62rem; color: var(--muted); margin-bottom: 1rem; }
+.budget-cat  { font-size: 0.62rem; color: var(--muted); margin-bottom: 1rem; }
 
-.progress-bar {
-  height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 0.75rem;
-}
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 0.75rem; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
 
-.progress-fill {
-  height: 100%; border-radius: 2px;
-  transition: width 0.6s ease;
-}
-
-.budget-stats {
-  display: flex; justify-content: space-between;
-  font-size: 0.65rem; color: var(--muted);
-}
-
+.budget-stats { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); }
 .budget-stats strong { color: var(--paper); }
 
 /* ─── AI Panel ────────────────────────────────────────── */
-.ai-panel {
-  background: var(--ink2); border: 1px solid var(--border); padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
+.ai-panel { background: var(--ink2); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
 .ai-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
 .ai-badge {
   background: rgba(200,245,58,0.1); border: 1px solid rgba(200,245,58,0.3);
   color: var(--accent); font-size: 0.62rem; letter-spacing: 0.1em;
   text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px;
 }
-
-.ai-question {
-  display: flex; gap: 0.75rem; margin-bottom: 1.25rem;
-}
-
+.ai-question { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
 .ai-question input {
   flex: 1; background: var(--ink3); border: 1px solid var(--border);
   color: var(--paper); font-family: var(--mono); font-size: 0.78rem;
-  padding: 0.65rem 1rem; outline: none; border-radius: 2px;
-  transition: border-color 0.2s;
+  padding: 0.65rem 1rem; outline: none; border-radius: 2px; transition: border-color 0.2s;
 }
 .ai-question input:focus { border-color: var(--accent); }
 .ai-question input::placeholder { color: #3a3a45; }
 
-.ai-result {
-  display: none;
-  animation: fadeIn 0.3s ease;
-}
+.ai-result { display: none; animation: fadeIn 0.3s ease; }
 
 @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
@@ -322,33 +296,18 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   margin-bottom: 1rem; padding: 1rem;
   background: var(--ink3); border-left: 3px solid var(--accent);
 }
-
 .ai-suggestions { display: flex; flex-direction: column; gap: 0.5rem; }
-
 .ai-suggestion {
   display: flex; align-items: flex-start; gap: 0.75rem;
   font-size: 0.72rem; color: var(--muted); line-height: 1.6;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0; border-bottom: 1px solid var(--border);
 }
 .ai-suggestion:last-child { border-bottom: none; }
 .ai-suggestion::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
 
-.ai-loading {
-  display: none; text-align: center; padding: 2rem;
-  font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em;
-}
-
-.ai-loading .dots::after {
-  content: '';
-  animation: dots 1.2s infinite;
-}
-
-@keyframes dots {
-  0%   { content: '.'; }
-  33%  { content: '..'; }
-  66%  { content: '...'; }
-}
+.ai-loading { display: none; text-align: center; padding: 2rem; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; }
+.ai-loading .dots::after { content: ''; animation: dots 1.2s infinite; }
+@keyframes dots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 
 /* ─── Accounts page ───────────────────────────────────── */
 .accounts-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 1rem; }
@@ -357,13 +316,10 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   background: var(--ink2); border: 1px solid var(--border);
   padding: 1.25rem; position: relative; overflow: hidden;
 }
-
 .account-card::before {
-  content: '';
-  position: absolute; top:0; left:0; right:0; height:3px;
+  content: ''; position: absolute; top:0; left:0; right:0; height:3px;
   background: var(--acct-color, var(--accent));
 }
-
 .account-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
 .account-name { font-size: 0.78rem; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
 .account-type { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
@@ -388,20 +344,12 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 @keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
 
 .modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
 }
-
 .modal-title { font-family: var(--serif); font-size: 1.1rem; }
-
-.modal-close {
-  background: none; border: none; color: var(--muted);
-  font-size: 1.2rem; cursor: pointer; padding: 0.25rem;
-  line-height: 1; transition: color 0.15s;
-}
+.modal-close { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; transition: color 0.15s; }
 .modal-close:hover { color: var(--paper); }
-
 .modal-body { padding: 1.5rem; }
 
 .form-field { margin-bottom: 1rem; }
@@ -409,8 +357,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 .form-field input, .form-field select, .form-field textarea {
   width: 100%; background: var(--ink3); border: 1px solid var(--border);
   color: var(--paper); font-family: var(--mono); font-size: 0.82rem;
-  padding: 0.65rem 0.9rem; outline: none; border-radius: 2px;
-  transition: border-color 0.2s;
+  padding: 0.65rem 0.9rem; outline: none; border-radius: 2px; transition: border-color 0.2s;
 }
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--accent); }
 .form-field select option { background: var(--ink2); }
@@ -419,17 +366,12 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border);
+  padding: 1rem 1.5rem; border-top: 1px solid var(--border);
   display: flex; gap: 0.75rem; justify-content: flex-end;
 }
 
 /* ─── Empty state ─────────────────────────────────────── */
-.empty {
-  text-align: center; padding: 3rem;
-  font-size: 0.75rem; color: var(--muted);
-  letter-spacing: 0.06em;
-}
+.empty { text-align: center; padding: 3rem; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; }
 .empty .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
 
 /* ─── Toast ───────────────────────────────────────────── */
@@ -443,11 +385,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 }
 .toast.show { transform: translateY(0) scale(1); opacity: 1; }
 .toast.success { border-left: 3px solid var(--success); }
-.toast.error { border-left: 3px solid var(--danger); }
-
-/* scroll */
-.content::-webkit-scrollbar { width: 4px; }
-.content::-webkit-scrollbar-thumb { background: var(--border); }
+.toast.error   { border-left: 3px solid var(--danger); }
 
 /* month selector */
 .month-select {
@@ -456,13 +394,160 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   padding: 0.35rem 0.65rem; outline: none; cursor: pointer; border-radius: 2px;
 }
 .month-select option { background: var(--ink2); }
+
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — TABLET  (≤ 900px)
+═══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — MOBILE  (≤ 768px)
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Layout: sidebar oculto, bottom nav visible ── */
+  .app {
+    grid-template-columns: 1fr;
+    height: 100vh;
+  }
+
+  .sidebar { display: none; }
+
+  .bottom-nav { display: flex; }
+
+  /* ── Main ocupa todo el ancho ── */
+  .main {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Topbar simplificada ── */
+  .topbar {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .page-subtitle { display: none; }
+
+  .page-title { font-size: 1.1rem; }
+
+  /* Ocultar selector de mes y botón nueva tx en topbar */
+  .topbar-right .month-select { display: none; }
+  .topbar-right .btn-accent { display: none; }
+
+  /* ── Content: deja espacio al bottom nav ── */
+  .content {
+    padding: 1rem;
+    padding-bottom: calc(var(--bottom-nav-h) + 1rem);
+  }
+
+  /* ── KPIs: 2×2 ── */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 1rem;
+  }
+
+  .kpi {
+    padding: 1rem;
+  }
+
+  .kpi-value { font-size: 1.25rem; }
+  .kpi-label { font-size: 0.58rem; }
+  .kpi-sub   { font-size: 0.58rem; }
+
+  /* ── Charts: columna única ── */
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .chart-wrap { height: 180px; }
+
+  /* ── Table: scroll horizontal ── */
+  .table-card { overflow-x: auto; }
+
+  .table-header {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Ocultar columnas menos importantes en mobile */
+  .tx-table .col-account,
+  .tx-table .col-notes { display: none; }
+
+  .tx-table th, .tx-table td { padding: 0.6rem 0.75rem; }
+
+  /* ── Botón flotante de nueva transacción ── */
+  .fab-tx {
+    display: flex;
+    position: fixed;
+    bottom: calc(var(--bottom-nav-h) + 1rem);
+    right: 1rem;
+    width: 48px; height: 48px;
+    background: var(--accent);
+    border: none; border-radius: 50%;
+    color: var(--ink); font-size: 1.4rem;
+    align-items: center; justify-content: center;
+    cursor: pointer; z-index: 400;
+    box-shadow: 0 4px 16px rgba(200,245,58,0.35);
+    transition: transform 0.2s;
+  }
+  .fab-tx:active { transform: scale(0.93); }
+
+  /* ── Modal en mobile: pantalla casi completa ── */
+  .modal {
+    width: calc(100vw - 2rem);
+    max-height: 90vh;
+    margin: 1rem;
+    border-radius: 8px;
+  }
+
+  .form-row { grid-template-columns: 1fr; }
+
+  /* ── Toast: arriba del bottom nav ── */
+  .toast {
+    bottom: calc(var(--bottom-nav-h) + 0.75rem);
+    left: 1rem; right: 1rem;
+    text-align: center;
+  }
+
+  /* ── AI panel ── */
+  .ai-question { flex-direction: column; }
+  .ai-question input { font-size: 0.85rem; padding: 0.75rem; }
+
+  /* ── Budgets grid ── */
+  .budgets-grid { grid-template-columns: 1fr; }
+
+  /* ── Accounts grid ── */
+  .accounts-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — SMALL MOBILE  (≤ 400px)
+═══════════════════════════════════════════════ */
+@media (max-width: 400px) {
+  .kpi-value { font-size: 1.1rem; }
+  .content { padding: 0.75rem; padding-bottom: calc(var(--bottom-nav-h) + 0.75rem); }
+  .chart-wrap { height: 160px; }
+  .bottom-nav-item { font-size: 0.45rem; }
+  .bottom-nav-item .bn-icon { font-size: 1rem; }
+}
+
+/* ── FAB de tx: solo mobile ── */
+.fab-tx { display: none; }
 </style>
 </head>
 <body>
 
 <div class="app">
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR (desktop) -->
   <aside class="sidebar">
     <div class="logo">Fin<em>Track</em></div>
     <nav class="nav">
@@ -536,15 +621,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 
         <div class="charts-grid">
           <div class="chart-card">
-            <div class="card-header">
-              <div class="card-title">Tendencia mensual</div>
-            </div>
+            <div class="card-header"><div class="card-title">Tendencia mensual</div></div>
             <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="card-header">
-              <div class="card-title">Gastos por categoría</div>
-            </div>
+            <div class="card-header"><div class="card-title">Gastos por categoría</div></div>
             <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
           </div>
         </div>
@@ -558,7 +639,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
             <thead>
               <tr>
                 <th>Descripción</th>
-                <th>Categoría</th>
+                <th class="col-account">Categoría</th>
                 <th>Tipo</th>
                 <th>Fecha</th>
                 <th style="text-align:right">Monto</th>
@@ -576,7 +657,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
         <div class="table-card">
           <div class="table-header">
             <div class="card-title" id="txPageCount">Todas las transacciones</div>
-            <div style="display:flex;gap:0.5rem">
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
               <select class="month-select" id="txTypeFilter" onchange="loadTransactions()">
                 <option value="">Todos los tipos</option>
                 <option value="income">Ingresos</option>
@@ -590,8 +671,8 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
             <thead>
               <tr>
                 <th>Descripción</th>
-                <th>Cuenta</th>
-                <th>Categoría</th>
+                <th class="col-account">Cuenta</th>
+                <th class="col-account">Categoría</th>
                 <th>Tipo</th>
                 <th>Fecha</th>
                 <th style="text-align:right">Monto</th>
@@ -633,7 +714,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
             <span class="ai-badge">✦ Claude AI</span>
           </div>
           <div class="ai-question">
-            <input id="aiQuestion" type="text" placeholder="¿Cómo puedo ahorrar más este mes? ¿En qué gasto más?"/>
+            <input id="aiQuestion" type="text" placeholder="¿Cómo puedo ahorrar más este mes?"/>
             <button class="btn btn-accent" onclick="askAI()">Analizar →</button>
           </div>
           <div class="ai-loading" id="aiLoading">
@@ -644,7 +725,6 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
             <div class="ai-suggestions" id="aiSuggestions"></div>
           </div>
         </div>
-
         <div class="chart-card">
           <div class="card-header"><div class="card-title">Distribución de gastos</div></div>
           <div class="chart-wrap"><canvas id="aiDonut"></canvas></div>
@@ -654,6 +734,34 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" onclick="goPage('overview')">
+    <span class="bn-icon">◈</span>
+    <span>Resumen</span>
+  </button>
+  <button class="bottom-nav-item" onclick="goPage('transactions')">
+    <span class="bn-icon">⇄</span>
+    <span>Movimientos</span>
+  </button>
+  <button class="bottom-nav-item" onclick="goPage('accounts')">
+    <span class="bn-icon">◻</span>
+    <span>Cuentas</span>
+  </button>
+  <button class="bottom-nav-item" onclick="goPage('budgets')">
+    <span class="bn-icon">◎</span>
+    <span>Presupuestos</span>
+  </button>
+  <button class="bottom-nav-item" onclick="goPage('ai')">
+    <span class="bn-icon">✦</span>
+    <span>IA</span>
+  </button>
+</nav>
+
+<!-- FAB nueva transacción (mobile) -->
+<button class="fab-tx" onclick="openTxModal()" title="Nueva transacción">+</button>
+
 
 <!-- ── TRANSACTION MODAL ── -->
 <div class="modal-overlay" id="txModal">
@@ -878,20 +986,30 @@ function onMonthChange() {
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
 const pageTitles = {
-  overview:     ['Resumen', 'Vista general de tus finanzas'],
-  transactions: ['Transacciones', 'Historial completo de movimientos'],
-  accounts:     ['Cuentas', 'Gestiona tus cuentas y saldos'],
-  budgets:      ['Presupuestos', 'Control de límites de gasto'],
-  ai:           ['IA Insights', 'Análisis inteligente con Claude'],
+  overview:     ['Resumen',        'Vista general de tus finanzas'],
+  transactions: ['Transacciones',  'Historial completo de movimientos'],
+  accounts:     ['Cuentas',        'Gestiona tus cuentas y saldos'],
+  budgets:      ['Presupuestos',   'Control de límites de gasto'],
+  ai:           ['IA Insights',    'Análisis inteligente con Claude'],
 };
 
 function goPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+
   document.getElementById(`page-${name}`).classList.add('active');
+
+  // Sidebar active
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.getAttribute('onclick').includes(name)) n.classList.add('active');
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(name)) n.classList.add('active');
   });
+
+  // Bottom nav active
+  document.querySelectorAll('.bottom-nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(name)) n.classList.add('active');
+  });
+
   const [title, sub] = pageTitles[name];
   document.getElementById('pageTitle').textContent = title;
   document.getElementById('pageSubtitle').textContent = sub;
@@ -906,7 +1024,6 @@ function goPage(name) {
 // BOOTSTRAP
 // ═══════════════════════════════════════════════════════════
 async function bootstrap() {
-  // Load user
   const user = await apiFetch('/api/v1/auth/me').catch(() => null);
   if (!user) return doLogout();
   const initials = (user.full_name || user.username).substring(0, 2).toUpperCase();
@@ -919,13 +1036,8 @@ async function bootstrap() {
   await loadOverviewData();
 }
 
-async function loadAccounts() {
-  accounts = await apiFetch('/api/v1/accounts').catch(() => []);
-}
-
-async function loadCategories() {
-  categories = await apiFetch('/api/v1/categories').catch(() => []);
-}
+async function loadAccounts()    { accounts   = await apiFetch('/api/v1/accounts').catch(() => []); }
+async function loadCategories()  { categories = await apiFetch('/api/v1/categories').catch(() => []); }
 
 // ═══════════════════════════════════════════════════════════
 // OVERVIEW
@@ -938,7 +1050,6 @@ async function loadOverviewData() {
     apiFetch('/api/v1/transactions?limit=8'),
   ]);
 
-  // KPIs
   document.getElementById('kpi-income').textContent = fmtCOP(summary.income);
   document.getElementById('kpi-expense').textContent = fmtCOP(summary.expense);
   document.getElementById('kpi-balance').textContent = fmtCOP(summary.balance);
@@ -967,27 +1078,15 @@ function renderTrendChart(data) {
         return new Date(y, m-1).toLocaleDateString('es-CO', { month:'short' });
       }),
       datasets: [
-        {
-          label: 'Ingresos',
-          data: data.map(d => d.income),
-          backgroundColor: 'rgba(46,213,115,0.7)',
-          borderRadius: 2,
-        },
-        {
-          label: 'Gastos',
-          data: data.map(d => d.expense),
-          backgroundColor: 'rgba(255,71,87,0.7)',
-          borderRadius: 2,
-        }
+        { label: 'Ingresos', data: data.map(d => d.income),  backgroundColor: 'rgba(46,213,115,0.7)', borderRadius: 2 },
+        { label: 'Gastos',   data: data.map(d => d.expense), backgroundColor: 'rgba(255,71,87,0.7)',  borderRadius: 2 },
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#6b6b72', font: { family: 'DM Mono', size: 11 } } },
-        tooltip: {
-          callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtCOP(ctx.raw)} COP` }
-        }
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtCOP(ctx.raw)} COP` } }
       },
       scales: {
         x: { grid: { color: 'rgba(42,42,53,0.8)' }, ticks: { color: '#6b6b72', font: { family: 'DM Mono', size: 10 } } },
@@ -1009,8 +1108,7 @@ function renderCategoryChart(data) {
       datasets: [{ data: data.map(d => d.total), backgroundColor: data.map(d => d.color), borderWidth: 0, hoverOffset: 8 }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '65%',
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
       plugins: {
         legend: { position: 'right', labels: { color: '#6b6b72', font: { family: 'DM Mono', size: 10 }, boxWidth: 10 } },
         tooltip: { callbacks: { label: ctx => ` ${fmtCOP(ctx.raw)} COP` } }
@@ -1028,8 +1126,8 @@ function renderRecentTx(txList) {
   tbody.innerHTML = txList.map(tx => `
     <tr>
       <td>${tx.description || '—'}</td>
-      <td>${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
-      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Transferencia'}[tx.transaction_type]}</span></td>
+      <td class="col-account">${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
+      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Trans.'}[tx.transaction_type]}</span></td>
       <td>${fmtDate(tx.date)}</td>
       <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
         ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
@@ -1057,9 +1155,9 @@ async function loadTransactions() {
   tbody.innerHTML = txList.map(tx => `
     <tr>
       <td>${tx.description || '—'}</td>
-      <td>${tx.account ? tx.account.icon + ' ' + tx.account.name : '—'}</td>
-      <td>${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
-      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Transferencia'}[tx.transaction_type]}</span></td>
+      <td class="col-account">${tx.account ? tx.account.icon + ' ' + tx.account.name : '—'}</td>
+      <td class="col-account">${tx.category ? tx.category.icon + ' ' + tx.category.name : '—'}</td>
+      <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Trans.'}[tx.transaction_type]}</span></td>
       <td>${fmtDate(tx.date)}</td>
       <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
         ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
@@ -1159,10 +1257,8 @@ async function askAI() {
   const question = document.getElementById('aiQuestion').value.trim();
   const loading = document.getElementById('aiLoading');
   const result = document.getElementById('aiResult');
-
   loading.style.display = 'block';
   result.style.display = 'none';
-
   try {
     const data = await apiFetch('/api/v1/ai/insights', {
       method: 'POST',
@@ -1170,8 +1266,7 @@ async function askAI() {
     });
     document.getElementById('aiInsight').textContent = data.insight;
     document.getElementById('aiSuggestions').innerHTML = data.suggestions
-      .map(s => `<div class="ai-suggestion">${s}</div>`)
-      .join('');
+      .map(s => `<div class="ai-suggestion">${s}</div>`).join('');
     result.style.display = 'block';
   } catch(e) {
     showToast(e.message, 'error');
@@ -1183,14 +1278,13 @@ async function askAI() {
 // ═══════════════════════════════════════════════════════════
 // MODALS
 // ═══════════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
-// ── TX MODAL ──
 function openTxModal() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -1216,37 +1310,30 @@ function openTxModal() {
 
 function onTxTypeChange() {
   const type = document.getElementById('txType').value;
-  const destField = document.getElementById('txDestField');
-  const catField = document.getElementById('txCatField');
-  const catSel = document.getElementById('txCategory');
-
-  destField.style.display = type === 'transfer' ? 'block' : 'none';
-  catField.style.display = type === 'transfer' ? 'none' : 'block';
+  document.getElementById('txDestField').style.display = type === 'transfer' ? 'block' : 'none';
+  document.getElementById('txCatField').style.display  = type === 'transfer' ? 'none'  : 'block';
 
   if (type !== 'transfer') {
     const cats = categories.filter(c => c.transaction_type === type);
-    catSel.innerHTML = cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    document.getElementById('txCategory').innerHTML = cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
   }
 }
 
 async function saveTx() {
-  const type = document.getElementById('txType').value;
-  const amount = parseFloat(document.getElementById('txAmount').value);
+  const type      = document.getElementById('txType').value;
+  const amount    = parseFloat(document.getElementById('txAmount').value);
   const accountId = parseInt(document.getElementById('txAccount').value);
-  const date = document.getElementById('txDate').value;
-  const desc = document.getElementById('txDesc').value.trim();
-  const notes = document.getElementById('txNotes').value.trim();
+  const date      = document.getElementById('txDate').value;
+  const desc      = document.getElementById('txDesc').value.trim();
+  const notes     = document.getElementById('txNotes').value.trim();
 
   if (!amount || amount <= 0) return showToast('Ingresa un monto válido', 'error');
   if (!accountId) return showToast('Selecciona una cuenta', 'error');
 
   const payload = {
-    transaction_type: type,
-    amount,
-    account_id: accountId,
+    transaction_type: type, amount, account_id: accountId,
     date: date ? new Date(date).toISOString() : null,
-    description: desc || null,
-    notes: notes || null,
+    description: desc || null, notes: notes || null,
   };
 
   if (type === 'transfer') {
@@ -1267,7 +1354,6 @@ async function saveTx() {
   }
 }
 
-// ── ACCOUNT MODAL ──
 function openAccountModal() {
   document.getElementById('acctName').value = '';
   document.getElementById('acctBalance').value = '0';
@@ -1276,14 +1362,12 @@ function openAccountModal() {
 }
 
 async function saveAccount() {
-  const name = document.getElementById('acctName').value.trim();
-  const balance = parseFloat(document.getElementById('acctBalance').value) || 0;
+  const name         = document.getElementById('acctName').value.trim();
+  const balance      = parseFloat(document.getElementById('acctBalance').value) || 0;
   const account_type = document.getElementById('acctType').value;
-  const icon = document.getElementById('acctIcon').value || '💳';
-  const color = document.getElementById('acctColor').value;
-
+  const icon         = document.getElementById('acctIcon').value || '💳';
+  const color        = document.getElementById('acctColor').value;
   if (!name) return showToast('Ingresa un nombre', 'error');
-
   try {
     await apiFetch('/api/v1/accounts', { method: 'POST', body: JSON.stringify({ name, balance, account_type, icon, color, currency: 'COP' }) });
     showToast('Cuenta creada ✓');
@@ -1296,27 +1380,24 @@ async function saveAccount() {
   }
 }
 
-// ── BUDGET MODAL ──
 function openBudgetModal() {
-  const catSel = document.getElementById('budgetCat');
+  const catSel  = document.getElementById('budgetCat');
   const expCats = categories.filter(c => c.transaction_type === 'expense');
   catSel.innerHTML = expCats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-  document.getElementById('budgetName').value = '';
+  document.getElementById('budgetName').value   = '';
   document.getElementById('budgetAmount').value = '';
-  document.getElementById('budgetAlert').value = '80';
+  document.getElementById('budgetAlert').value  = '80';
   openModal('budgetModal');
 }
 
 async function saveBudget() {
-  const name = document.getElementById('budgetName').value.trim();
-  const amount = parseFloat(document.getElementById('budgetAmount').value);
-  const category_id = parseInt(document.getElementById('budgetCat').value);
-  const period = document.getElementById('budgetPeriod').value;
+  const name            = document.getElementById('budgetName').value.trim();
+  const amount          = parseFloat(document.getElementById('budgetAmount').value);
+  const category_id     = parseInt(document.getElementById('budgetCat').value);
+  const period          = document.getElementById('budgetPeriod').value;
   const alert_threshold = (parseFloat(document.getElementById('budgetAlert').value) || 80) / 100;
-
   if (!name) return showToast('Ingresa un nombre', 'error');
   if (!amount || amount <= 0) return showToast('Ingresa un monto válido', 'error');
-
   try {
     await apiFetch('/api/v1/budgets', { method: 'POST', body: JSON.stringify({ name, amount, category_id, period, alert_threshold }) });
     showToast('Presupuesto creado ✓');
@@ -1333,7 +1414,9 @@ async function saveBudget() {
 bootstrap();
 </script>
 
-<!-- ── AI CHAT FLOTANTE ──────────────────────────────────────────────────── -->
+<!-- ══════════════════════════════════════════════════════════
+     AI CHAT FLOTANTE
+══════════════════════════════════════════════════════════ -->
 <style>
 .chat-fab {
   position: fixed; bottom: 1.5rem; right: 1.5rem;
@@ -1363,23 +1446,13 @@ bootstrap();
 }
 
 .chat-header {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
 }
-
 .chat-header-left { display: flex; align-items: center; gap: 0.6rem; }
 .chat-title { font-size: 0.78rem; letter-spacing: 0.06em; }
-.chat-status {
-  font-size: 0.6rem; color: var(--success);
-  letter-spacing: 0.08em; text-transform: uppercase;
-}
-
-.chat-close {
-  background: none; border: none; color: var(--muted);
-  font-size: 1rem; cursor: pointer; transition: color 0.15s;
-}
+.chat-status { font-size: 0.6rem; color: var(--success); letter-spacing: 0.08em; text-transform: uppercase; }
+.chat-close { background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; transition: color 0.15s; }
 .chat-close:hover { color: var(--paper); }
 
 .chat-messages {
@@ -1394,52 +1467,34 @@ bootstrap();
   font-size: 0.78rem; line-height: 1.6; border-radius: 4px;
   animation: fadeIn 0.2s ease;
 }
-
 .chat-bubble.user {
-  background: rgba(200,245,58,0.12);
-  border: 1px solid rgba(200,245,58,0.2);
+  background: rgba(200,245,58,0.12); border: 1px solid rgba(200,245,58,0.2);
   color: var(--paper); align-self: flex-end;
 }
-
 .chat-bubble.bot {
-  background: var(--ink3);
-  border: 1px solid var(--border);
+  background: var(--ink3); border: 1px solid var(--border);
   color: var(--paper); align-self: flex-start;
 }
+.chat-bubble.bot.success { border-left: 3px solid var(--success); }
 
-.chat-bubble.bot.success {
-  border-left: 3px solid var(--success);
-}
-
-.chat-tx-confirm {
-  margin-top: 0.4rem; font-size: 0.68rem;
-  color: var(--success); letter-spacing: 0.04em;
-}
+.chat-tx-confirm { margin-top: 0.4rem; font-size: 0.68rem; color: var(--success); letter-spacing: 0.04em; }
 
 .chat-input-row {
   display: flex; gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
+  padding: 0.75rem 1rem; border-top: 1px solid var(--border); flex-shrink: 0;
 }
-
 .chat-input {
-  flex: 1; background: var(--ink3);
-  border: 1px solid var(--border);
-  color: var(--paper); font-family: var(--mono);
-  font-size: 0.78rem; padding: 0.6rem 0.8rem;
-  outline: none; border-radius: 2px;
-  transition: border-color 0.2s;
+  flex: 1; background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper); font-family: var(--mono); font-size: 0.78rem;
+  padding: 0.6rem 0.8rem; outline: none; border-radius: 2px; transition: border-color 0.2s;
 }
 .chat-input:focus { border-color: var(--accent); }
 .chat-input::placeholder { color: #3a3a45; font-size: 0.72rem; }
 
 .chat-send {
-  background: var(--accent); border: none;
-  color: var(--ink); font-size: 0.9rem;
+  background: var(--accent); border: none; color: var(--ink); font-size: 0.9rem;
   width: 36px; height: 36px; border-radius: 2px;
-  cursor: pointer; display: flex; align-items: center;
-  justify-content: center; flex-shrink: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   transition: opacity 0.2s;
 }
 .chat-send:hover { opacity: 0.85; }
@@ -1452,15 +1507,7 @@ bootstrap();
   border-radius: 4px; font-size: 0.72rem; color: var(--muted);
 }
 .chat-typing.show { display: block; }
-.chat-typing::after {
-  content: '';
-  animation: dots 1.2s infinite;
-}
-@keyframes dots {
-  0%  { content: '.'; }
-  33% { content: '..'; }
-  66% { content: '...'; }
-}
+.chat-typing::after { content: ''; animation: dots 1.2s infinite; }
 
 .chat-suggestions {
   display: flex; flex-wrap: wrap; gap: 0.4rem;
@@ -1475,21 +1522,34 @@ bootstrap();
 }
 .chat-suggestion-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Mobile fullscreen */
-@media (max-width: 480px) {
+/* ── Chat mobile: pantalla completa sobre bottom nav ── */
+@media (max-width: 768px) {
   .chat-panel {
-    bottom: 0; right: 0; left: 0;
-    width: 100%; height: 85vh;
-    border-radius: 12px 12px 0 0;
+    bottom: var(--bottom-nav-h);
+    right: 0; left: 0;
+    width: 100%;
+    height: calc(85vh - var(--bottom-nav-h));
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
   }
-  .chat-fab { bottom: 1rem; right: 1rem; }
+
+  /* FAB encima del bottom nav */
+  .chat-fab {
+    bottom: calc(var(--bottom-nav-h) + 0.75rem);
+    right: 1rem;
+    width: 48px; height: 48px;
+    font-size: 1.2rem;
+  }
+
+  .chat-input { font-size: 0.9rem; padding: 0.75rem; }
+  .chat-send  { width: 42px; height: 42px; }
+
+  .chat-bubble { font-size: 0.82rem; max-width: 90%; }
 }
 </style>
 
-<!-- Botón flotante -->
 <button class="chat-fab" onclick="toggleChat()" id="chatFab">💬</button>
 
-<!-- Panel de chat -->
 <div class="chat-panel" id="chatPanel">
   <div class="chat-header">
     <div class="chat-header-left">
@@ -1518,24 +1578,18 @@ bootstrap();
   </div>
 
   <div class="chat-input-row">
-    <input
-      class="chat-input"
-      id="chatInput"
-      type="text"
-      placeholder="Rappi 45000 · ¿en qué gasto más?"
-      autocomplete="off"
-    />
+    <input class="chat-input" id="chatInput" type="text"
+      placeholder="Rappi 45000 · ¿en qué gasto más?" autocomplete="off"/>
     <button class="chat-send" id="chatSendBtn" onclick="sendChat()">→</button>
   </div>
 </div>
 
 <script>
-// ── Chat state ──────────────────────────────────────────────────────────────
 const chatHistory = [];
 
 function toggleChat() {
   const panel = document.getElementById('chatPanel');
-  const fab = document.getElementById('chatFab');
+  const fab   = document.getElementById('chatFab');
   const isOpen = panel.classList.toggle('open');
   fab.textContent = isOpen ? '✕' : '💬';
   if (isOpen) {
@@ -1550,7 +1604,7 @@ function scrollChatBottom() {
 }
 
 function appendMessage(text, role, txConfirm = null) {
-  const msgs = document.getElementById('chatMessages');
+  const msgs   = document.getElementById('chatMessages');
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}${txConfirm ? ' success' : ''}`;
   bubble.innerHTML = text.replace(/\n/g, '<br/>');
@@ -1571,7 +1625,7 @@ function setTyping(show) {
 }
 
 async function sendChat() {
-  const input = document.getElementById('chatInput');
+  const input   = document.getElementById('chatInput');
   const message = input.value.trim();
   if (!message) return;
 
@@ -1586,16 +1640,10 @@ async function sendChat() {
       method: 'POST',
       body: JSON.stringify({ message, history: chatHistory.slice(-6) }),
     });
-
     setTyping(false);
     appendMessage(res.reply, 'bot', res.transaction_created || null);
     chatHistory.push({ role: 'assistant', content: res.reply });
-
-    // Refresh dashboard si se creó una transacción
-    if (res.transaction_created) {
-      await loadAccounts();
-      loadOverviewData();
-    }
+    if (res.transaction_created) { await loadAccounts(); loadOverviewData(); }
   } catch(e) {
     setTyping(false);
     appendMessage('Error al conectar. Intenta de nuevo.', 'bot');

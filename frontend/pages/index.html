@@ -30,7 +30,6 @@
     overflow: hidden;
   }
 
-  /* Background grid */
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -41,7 +40,6 @@
     pointer-events: none;
   }
 
-  /* Glowing orb */
   body::after {
     content: '';
     position: fixed;
@@ -86,9 +84,7 @@
 
   .hero-ticker span { color: var(--accent); }
 
-  .hero-main {
-    animation: slideUp 0.8s ease both;
-  }
+  .hero-main { animation: slideUp 0.8s ease both; }
 
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(30px); }
@@ -103,10 +99,7 @@
     margin-bottom: 1.5rem;
   }
 
-  .brand em {
-    font-style: italic;
-    color: var(--accent);
-  }
+  .brand em { font-style: italic; color: var(--accent); }
 
   .hero-desc {
     font-size: 0.8rem;
@@ -130,7 +123,6 @@
     padding: 1.2rem 1rem;
     transition: background 0.2s;
   }
-
   .stat:hover { background: var(--card); }
 
   .stat-val {
@@ -187,10 +179,7 @@
     transition: color 0.2s;
   }
 
-  .tab-btn.active {
-    color: var(--paper);
-  }
-
+  .tab-btn.active { color: var(--paper); }
   .tab-btn.active::after {
     content: '';
     position: absolute;
@@ -227,9 +216,7 @@
     gap: 0.5rem;
   }
 
-  .field {
-    margin-bottom: 1.1rem;
-  }
+  .field { margin-bottom: 1.1rem; }
 
   .field label {
     display: block;
@@ -309,17 +296,68 @@
     gap: 0.5rem;
   }
 
-  .alert.error { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: var(--danger); display: flex; }
-  .alert.success { background: rgba(46,213,115,0.1); border: 1px solid rgba(46,213,115,0.3); color: var(--success); display: flex; }
+  .alert.error  { background: rgba(255,71,87,0.1);  border: 1px solid rgba(255,71,87,0.3);  color: var(--danger);  display: flex; }
+  .alert.success{ background: rgba(46,213,115,0.1); border: 1px solid rgba(46,213,115,0.3); color: var(--success); display: flex; }
 
   .form-panel { display: none; }
   .form-panel.active { display: block; }
 
-  /* responsive */
+  /* ─────────────────────────────────────────
+     RESPONSIVE — Mobile
+  ───────────────────────────────────────── */
   @media (max-width: 768px) {
-    .layout { grid-template-columns: 1fr; }
+    html, body { overflow: auto; }
+
+    .layout {
+      grid-template-columns: 1fr;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    /* Ocultar hero en mobile */
     .hero { display: none; }
-    .auth-panel { padding: 2rem 1.5rem; }
+
+    /* Auth panel ocupa toda la pantalla */
+    .auth-panel {
+      padding: 2.5rem 1.5rem 3rem;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+
+    /* Mini branding en mobile ya que el hero no está */
+    .auth-panel::before {
+      content: 'FinTrack';
+      display: block;
+      font-family: var(--serif);
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: var(--paper);
+      margin-bottom: 2rem;
+    }
+
+    /* Inputs más grandes para touch */
+    .field input {
+      font-size: 1rem;
+      padding: 0.9rem 1rem;
+    }
+
+    .btn-primary {
+      padding: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .form-title { font-size: 1.6rem; }
+
+    .tab-btn {
+      font-size: 0.8rem;
+      padding: 0.85rem 1.25rem 0.85rem 0;
+    }
+
+    .demo-hint { font-size: 0.75rem; flex-wrap: wrap; }
+  }
+
+  @media (max-width: 400px) {
+    .auth-panel { padding: 2rem 1.25rem 2.5rem; }
   }
 </style>
 </head>
@@ -331,7 +369,6 @@
     <div class="hero-ticker">
       <span>↑ 12.4%</span> rendimiento · <span>$0</span> comisiones · cifrado AES-256
     </div>
-
     <div class="hero-main">
       <h1 class="brand">Fin<em>Track</em></h1>
       <p class="hero-desc">
@@ -354,13 +391,11 @@
         </div>
       </div>
     </div>
-
     <div class="hero-footer">© 2025 FinTrack · Gestión financiera personal</div>
   </div>
 
   <!-- RIGHT AUTH -->
   <div class="auth-panel">
-
     <div class="tab-row">
       <button class="tab-btn active" onclick="switchTab('login')">Ingresar</button>
       <button class="tab-btn" onclick="switchTab('register')">Crear cuenta</button>
@@ -370,13 +405,8 @@
     <div id="loginPanel" class="form-panel active">
       <h2 class="form-title">Bienvenido<br/><em style="font-style:italic;color:var(--accent)">de vuelta.</em></h2>
       <p class="form-subtitle">Ingresa tus credenciales para continuar</p>
-
-      <div class="demo-hint">
-        ⚡ Demo: <strong>demo@fintrack.app</strong> / <strong>demo1234</strong>
-      </div>
-
+      <div class="demo-hint">⚡ Demo: <strong>demo@fintrack.app</strong> / <strong>demo1234</strong></div>
       <div id="loginAlert" class="alert"></div>
-
       <div class="field">
         <label>Email o usuario</label>
         <input id="loginUser" type="text" placeholder="demo@fintrack.app" autocomplete="username"/>
@@ -385,7 +415,6 @@
         <label>Contraseña</label>
         <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
       </div>
-
       <button class="btn-primary" id="loginBtn" onclick="doLogin()">
         <span class="btn-text">Ingresar →</span>
         <span class="spinner"></span>
@@ -396,9 +425,7 @@
     <div id="registerPanel" class="form-panel">
       <h2 class="form-title">Empieza hoy<br/><em style="font-style:italic;color:var(--accent)">gratis.</em></h2>
       <p class="form-subtitle">Crea tu cuenta en segundos</p>
-
       <div id="registerAlert" class="alert"></div>
-
       <div class="field">
         <label>Nombre completo</label>
         <input id="regName" type="text" placeholder="Juan Camilo García"/>
@@ -415,13 +442,11 @@
         <label>Contraseña</label>
         <input id="regPass" type="password" placeholder="Mínimo 8 caracteres"/>
       </div>
-
       <button class="btn-primary" id="registerBtn" onclick="doRegister()">
         <span class="btn-text">Crear cuenta →</span>
         <span class="spinner"></span>
       </button>
     </div>
-
   </div>
 </div>
 
@@ -449,7 +474,6 @@
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value;
     if (!user || !pass) return showAlert('loginAlert', 'Completa todos los campos.', 'error');
-
     setLoading('loginBtn', true);
     try {
       const form = new URLSearchParams({ username: user, password: pass });
@@ -477,7 +501,6 @@
     const pass  = document.getElementById('regPass').value;
     if (!email || !user || !pass) return showAlert('registerAlert', 'Completa los campos obligatorios.', 'error');
     if (pass.length < 8) return showAlert('registerAlert', 'La contraseña debe tener al menos 8 caracteres.', 'error');
-
     setLoading('registerBtn', true);
     try {
       const res = await fetch(`${API}/api/v1/auth/register`, {
@@ -488,8 +511,6 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Error al registrarse');
       showAlert('registerAlert', '✓ Cuenta creada. Iniciando sesión…', 'success');
-
-      // Auto-login
       const form = new URLSearchParams({ username: user, password: pass });
       const loginRes = await fetch(`${API}/api/v1/auth/login`, {
         method: 'POST',
@@ -506,7 +527,6 @@
     }
   }
 
-  // Enter key support
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       if (document.getElementById('loginPanel').classList.contains('active')) doLogin();
@@ -514,7 +534,6 @@
     }
   });
 
-  // Redirect if already logged in
   if (localStorage.getItem('ft_token')) window.location.href = '/dashboard';
 </script>
 </body>
