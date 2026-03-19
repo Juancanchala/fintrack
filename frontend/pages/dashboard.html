@@ -1544,6 +1544,13 @@ bootstrap();
   .chat-input { font-size: 0.9rem; padding: 0.75rem; }
   .chat-send  { width: 42px; height: 42px; }
 
+  /* Evitar solapamiento con controles del navegador */
+  .chat-input-row {
+    padding: 0.75rem 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    margin-right: 48px;
+  }
+
   .chat-bubble { font-size: 0.82rem; max-width: 90%; }
 }
 </style>
