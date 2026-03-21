@@ -399,6 +399,39 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 /* FAB oculto por defecto (solo visible en mobile via media query) */
 .fab-tx { display: none; }
 
+/* ─── Categorías ───────────────────────────────────────── */
+.cat-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+.cat-tab {
+  background:var(--ink2); border:1px solid var(--border); color:var(--muted);
+  font-family:var(--mono); font-size:0.72rem; letter-spacing:0.08em;
+  padding:0.5rem 1.25rem; cursor:pointer; border-radius:4px; transition:all 0.15s;
+}
+.cat-tab.active { background:rgba(200,245,58,0.1); border-color:rgba(200,245,58,0.3); color:var(--accent); }
+.cat-chips { display:flex; flex-wrap:wrap; gap:0.6rem; padding:1rem 1.25rem 1.25rem; }
+.cat-chip {
+  display:flex; align-items:center; gap:0.4rem;
+  background:var(--ink3); border:1px solid var(--border);
+  border-radius:20px; padding:0.35rem 0.85rem; font-size:0.75rem;
+}
+.cat-chip.is-default { opacity:0.65; }
+.cat-chip .chip-del {
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  font-size:0.75rem; padding:0 0.1rem; line-height:1; transition:color 0.15s; margin-left:0.2rem;
+}
+.cat-chip .chip-del:hover { color:var(--danger); }
+.cat-chip.suggested {
+  cursor:pointer; border-style:dashed; color:var(--muted); transition:all 0.15s;
+}
+.cat-chip.suggested:hover { border-color:var(--accent); color:var(--paper); background:rgba(200,245,58,0.06); }
+.suggestions-header {
+  padding:0.75rem 1.25rem; border-top:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; user-select:none;
+}
+.suggestions-header:hover { background:var(--ink3); }
+#suggestionsPanel { border-top:1px solid var(--border); display:none; }
+#suggestionsPanel.open { display:flex; }
+
 /* ═══════════════════════════════════════════════
    RESPONSIVE — TABLET  (≤ 900px)
 ═══════════════════════════════════════════════ */
@@ -577,6 +610,9 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
       <div class="nav-item" onclick="goPage('budgets')">
         <span class="icon">◎</span> Presupuestos
       </div>
+      <div class="nav-item" onclick="goPage('categories')">
+        <span class="icon">⊞</span> Categorías
+      </div>
       <div class="nav-item" onclick="goPage('ai')">
         <span class="icon">✦</span> IA Insights
       </div>
@@ -745,6 +781,30 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
         </div>
       </div>
 
+      <!-- ── CATEGORIES PAGE ── -->
+      <div id="page-categories" class="page">
+        <div class="cat-tabs">
+          <button class="cat-tab active" onclick="switchCatTab('expense')">💸 Gastos</button>
+          <button class="cat-tab" onclick="switchCatTab('income')">💰 Ingresos</button>
+        </div>
+
+        <div class="table-card" style="margin-bottom:1rem">
+          <div class="table-header">
+            <div class="card-title" id="catSectionTitle">Mis categorías de gastos</div>
+            <button class="btn btn-accent" onclick="openCategoryModal()">+ Nueva</button>
+          </div>
+          <div id="catChips" class="cat-chips"></div>
+        </div>
+
+        <div class="table-card">
+          <div class="suggestions-header" onclick="toggleSuggestions()">
+            <div class="card-title">✨ Categorías sugeridas <span style="font-size:0.65rem;color:var(--muted);font-family:var(--mono)">(clic para agregar)</span></div>
+            <span id="suggestionsChevron" style="color:var(--muted)">▾</span>
+          </div>
+          <div id="suggestionsPanel" class="cat-chips"></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -767,11 +827,43 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
     <span class="bn-icon">◎</span>
     <span>Presupuestos</span>
   </button>
+  <button class="bottom-nav-item" onclick="goPage('categories')">
+    <span class="bn-icon">⊞</span>
+    <span>Categorías</span>
+  </button>
   <button class="bottom-nav-item" onclick="goPage('ai')">
     <span class="bn-icon">✦</span>
     <span>IA</span>
   </button>
 </nav>
+
+<!-- ── CATEGORY MODAL ── -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="catModalTitle">Nueva categoría</div>
+      <button class="modal-close" onclick="closeModal('categoryModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Nombre</label>
+        <input id="catName" type="text" placeholder="Ej: Mascotas"/>
+      </div>
+      <div class="form-field">
+        <label>Emoji / Ícono</label>
+        <input id="catIcon" type="text" placeholder="🐾" maxlength="4"/>
+      </div>
+      <div class="form-field">
+        <label>Color</label>
+        <input id="catColor" type="color" value="#6366f1" style="height:2.5rem;padding:0.2rem 0.4rem;cursor:pointer"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('categoryModal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveCategory()">Guardar →</button>
+    </div>
+  </div>
+</div>
 
 <!-- FAB nueva transacción (mobile) -->
 <button class="fab-tx" onclick="openTxModal()" title="Nueva transacción">+</button>
@@ -1002,6 +1094,7 @@ const pageTitles = {
   transactions: ['Transacciones',  'Historial completo de movimientos'],
   accounts:     ['Cuentas',        'Gestiona tus cuentas y saldos'],
   budgets:      ['Presupuestos',   'Control de límites de gasto'],
+  categories:   ['Categorías',     'Organiza y personaliza tus categorías'],
   ai:           ['IA Insights',    'Análisis inteligente con Claude'],
 };
 
@@ -1029,6 +1122,7 @@ function goPage(name) {
   if (name === 'transactions') loadTransactions();
   if (name === 'accounts') renderAccounts();
   if (name === 'budgets') loadBudgets();
+  if (name === 'categories') loadCategoriesPage();
   if (name === 'ai') loadAIPage();
 }
 
@@ -1479,6 +1573,153 @@ async function saveBudget() {
   } catch(e) {
     showToast(e.message, 'error');
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CATEGORIES PAGE
+// ═══════════════════════════════════════════════════════════
+let _catTab = 'expense';
+
+const SUGGESTED_CATS = {
+  expense: [
+    { name:'Mascotas',      icon:'🐾', color:'#f97316' },
+    { name:'Gimnasio',      icon:'🏋️', color:'#ef4444' },
+    { name:'Restaurantes',  icon:'🍽️', color:'#eab308' },
+    { name:'Café',          icon:'☕', color:'#92400e' },
+    { name:'Suscripciones', icon:'📺', color:'#8b5cf6' },
+    { name:'Viajes',        icon:'✈️', color:'#06b6d4' },
+    { name:'Regalos',       icon:'🎁', color:'#ec4899' },
+    { name:'Tecnología',    icon:'💻', color:'#3b82f6' },
+    { name:'Belleza',       icon:'💅', color:'#f472b6' },
+    { name:'Deporte',       icon:'⚽', color:'#22c55e' },
+    { name:'Seguros',       icon:'🛡️', color:'#64748b' },
+    { name:'Impuestos',     icon:'📋', color:'#6b7280' },
+    { name:'Hogar',         icon:'🏡', color:'#d97706' },
+    { name:'Farmacia',      icon:'💊', color:'#10b981' },
+    { name:'Ahorro',        icon:'🐷', color:'#06b6d4' },
+    { name:'Combustible',   icon:'⛽', color:'#f59e0b' },
+    { name:'Limpieza',      icon:'🧹', color:'#84cc16' },
+  ],
+  income: [
+    { name:'Bonificación',  icon:'💼', color:'#22c55e' },
+    { name:'Renta',         icon:'🏘️', color:'#10b981' },
+    { name:'Ventas',        icon:'🛍️', color:'#3b82f6' },
+    { name:'Reembolso',     icon:'💳', color:'#6366f1' },
+    { name:'Dividendos',    icon:'📊', color:'#f59e0b' },
+    { name:'Pensión',       icon:'👴', color:'#8b5cf6' },
+    { name:'Beca',          icon:'🎓', color:'#06b6d4' },
+    { name:'Comisiones',    icon:'🤝', color:'#ec4899' },
+    { name:'Premio',        icon:'🏆', color:'#eab308' },
+  ]
+};
+
+function switchCatTab(type) {
+  _catTab = type;
+  document.querySelectorAll('.cat-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && type === 'expense') || (i === 1 && type === 'income'));
+  });
+  renderCatChips();
+  renderSuggestions();
+}
+
+function renderCatChips() {
+  const filtered = categories.filter(c => c.transaction_type === _catTab);
+  const container = document.getElementById('catChips');
+  document.getElementById('catSectionTitle').textContent =
+    _catTab === 'expense' ? 'Mis categorías de gastos' : 'Mis categorías de ingresos';
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty" style="padding:1rem">Sin categorías aún</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(c => `
+    <div class="cat-chip ${c.is_default ? 'is-default' : ''}" style="border-color:${c.color || 'var(--border)'}40">
+      <span>${c.icon || '📁'}</span>
+      <span>${c.name}</span>
+      ${c.is_default
+        ? '<span style="font-size:0.6rem;color:var(--muted);margin-left:0.2rem">default</span>'
+        : `<button class="chip-del" onclick="deleteCategoryItem(${c.id})" title="Eliminar">✕</button>`}
+    </div>
+  `).join('');
+}
+
+function renderSuggestions() {
+  const existing = new Set(categories.filter(c => c.transaction_type === _catTab).map(c => c.name.toLowerCase()));
+  const pending = SUGGESTED_CATS[_catTab].filter(s => !existing.has(s.name.toLowerCase()));
+  const container = document.getElementById('suggestionsPanel');
+  if (!pending.length) {
+    container.innerHTML = '<div class="empty" style="padding:1rem">✓ Ya tienes todas las sugeridas</div>';
+    return;
+  }
+  container.innerHTML = pending.map(s => `
+    <div class="cat-chip suggested" onclick="addSuggestedCat('${s.name}','${s.icon}','${s.color}')">
+      <span>${s.icon}</span>
+      <span>${s.name}</span>
+      <span style="font-size:0.8rem;color:var(--accent);margin-left:0.2rem">+</span>
+    </div>
+  `).join('');
+}
+
+function toggleSuggestions() {
+  const panel = document.getElementById('suggestionsPanel');
+  const chevron = document.getElementById('suggestionsChevron');
+  const open = panel.classList.toggle('open');
+  chevron.textContent = open ? '▴' : '▾';
+}
+
+function loadCategoriesPage() {
+  renderCatChips();
+  renderSuggestions();
+}
+
+async function addSuggestedCat(name, icon, color) {
+  try {
+    const cat = await apiFetch('/api/v1/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name, icon, color, transaction_type: _catTab })
+    });
+    categories.push(cat);
+    renderCatChips();
+    renderSuggestions();
+    showToast(`${icon} ${name} agregada ✓`);
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteCategoryItem(id) {
+  if (!confirm('¿Eliminar esta categoría?')) return;
+  try {
+    await apiFetch(`/api/v1/categories/${id}`, { method: 'DELETE' });
+    categories = categories.filter(c => c.id !== id);
+    renderCatChips();
+    renderSuggestions();
+    showToast('Categoría eliminada');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function openCategoryModal() {
+  document.getElementById('catName').value = '';
+  document.getElementById('catIcon').value = '';
+  document.getElementById('catColor').value = '#6366f1';
+  document.getElementById('catModalTitle').textContent =
+    `Nueva categoría de ${_catTab === 'expense' ? 'gasto' : 'ingreso'}`;
+  openModal('categoryModal');
+}
+
+async function saveCategory() {
+  const name  = document.getElementById('catName').value.trim();
+  const icon  = document.getElementById('catIcon').value.trim() || '📁';
+  const color = document.getElementById('catColor').value;
+  if (!name) return showToast('Ingresa un nombre', 'error');
+  try {
+    const cat = await apiFetch('/api/v1/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name, icon, color, transaction_type: _catTab })
+    });
+    categories.push(cat);
+    closeModal('categoryModal');
+    renderCatChips();
+    renderSuggestions();
+    showToast(`${icon} ${name} creada ✓`);
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ═══════════════════════════════════════════════════════════
