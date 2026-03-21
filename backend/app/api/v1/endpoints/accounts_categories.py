@@ -29,6 +29,8 @@ def update_account(account_id: int, payload: AccountUpdate, db: Session = Depend
     account.color = payload.color
     account.icon = payload.icon
     account.currency = payload.currency
+    if payload.balance is not None:
+        account.balance = payload.balance
     db.commit()
     db.refresh(account)
     return account

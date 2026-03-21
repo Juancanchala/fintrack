@@ -1053,6 +1053,12 @@ function fmtCOP(n) {
   return '$' + Math.abs(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
 }
 
+const CURRENCY_SYMBOLS = { COP:'$', USD:'US$', EUR:'€', GBP:'£', MXN:'MX$', ARS:'AR$' };
+function fmtCurrency(n, currency = 'COP') {
+  if (!n && n !== 0) return (CURRENCY_SYMBOLS[currency] || currency) + '0';
+  return (CURRENCY_SYMBOLS[currency] || currency) + Math.abs(n).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+}
+
 function fmtDate(d) {
   return new Date(d).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'2-digit' });
 }
@@ -1320,7 +1326,7 @@ function renderAccounts() {
       <div class="account-icon">${a.icon}</div>
       <div class="account-name">${a.name}</div>
       <div class="account-type">${{checking:'Corriente',savings:'Ahorros',cash:'Efectivo',credit:'Crédito',investment:'Inversión'}[a.account_type] || a.account_type}</div>
-      <div class="account-balance">${fmtCOP(a.balance)}</div>
+      <div class="account-balance">${fmtCurrency(a.balance, a.currency)}</div>
       <div class="account-currency">${a.currency}</div>
     </div>
   `).join('');
@@ -1545,7 +1551,8 @@ function openAccountModal(account = null) {
   document.getElementById('acctColor').value = account ? account.color : '#6366f1';
   document.getElementById('acctType').value = account ? account.account_type : 'checking';
   document.getElementById('acctCurrency').value = account ? account.currency : 'COP';
-  document.getElementById('acctBalanceField').style.display = account ? 'none' : 'block';
+  document.getElementById('acctBalanceField').style.display = 'block';
+  document.querySelector('label[for="acctBalance"]') && (document.querySelector('#acctBalanceField label').textContent = account ? 'Saldo actual' : 'Saldo inicial');
   document.getElementById('accountModalTitle').textContent = account ? 'Editar cuenta' : 'Nueva cuenta';
   document.getElementById('acctSaveBtn').textContent = account ? 'Guardar →' : 'Crear →';
   openModal('accountModal');
@@ -1575,7 +1582,7 @@ async function saveAccount() {
   if (!name) return showToast('Ingresa un nombre', 'error');
   try {
     if (id) {
-      await apiFetch(`/api/v1/accounts/${id}`, { method: 'PUT', body: JSON.stringify({ name, account_type, icon, color, currency }) });
+      await apiFetch(`/api/v1/accounts/${id}`, { method: 'PUT', body: JSON.stringify({ name, account_type, icon, color, currency, balance }) });
       showToast('Cuenta actualizada ✓');
     } else {
       await apiFetch('/api/v1/accounts', { method: 'POST', body: JSON.stringify({ name, balance, account_type, icon, color, currency }) });

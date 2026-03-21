@@ -36,6 +36,7 @@ class AccountUpdate(BaseModel):
     currency: str = "COP"
     color: Optional[str] = "#6366f1"
     icon: Optional[str] = "💳"
+    balance: Optional[float] = None
 
 class AccountOut(BaseModel):
     id: int
