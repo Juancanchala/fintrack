@@ -12,15 +12,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
-    DATABASE_URL: str = "sqlite:////app/data/fintrack.db"
+    DB_URL: str = "sqlite:////app/data/fintrack.db"
 
     @property
     def database_url(self) -> str:
-        # Railway entrega postgres://, SQLAlchemy necesita postgresql://
-        url = self.DATABASE_URL
+        url = self.DB_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
         return url
+
     OPENAI_API_KEY: str = ""
 
     CORS_ORIGINS: str = '["http://localhost:8000"]'
