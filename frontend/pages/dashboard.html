@@ -512,11 +512,16 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   .fab-tx:active { transform: scale(0.93); }
 
   /* ── Modal en mobile: pantalla casi completa ── */
+  .modal-overlay {
+    align-items: flex-end;
+    padding-bottom: calc(var(--bottom-nav-h) + 0.5rem);
+  }
+
   .modal {
     width: calc(100vw - 2rem);
-    max-height: 88vh;
-    margin: 1rem;
-    border-radius: 8px;
+    max-height: calc(92vh - var(--bottom-nav-h));
+    margin: 0 1rem;
+    border-radius: 8px 8px 4px 4px;
   }
 
   .form-row { grid-template-columns: 1fr; }
