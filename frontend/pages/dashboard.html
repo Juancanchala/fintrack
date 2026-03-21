@@ -1188,7 +1188,9 @@ async function loadOverviewData() {
   document.getElementById('kpi-savings-rate').textContent = `Tasa de ahorro: ${savings}%`;
 
   const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-  document.getElementById('kpi-total').textContent = fmtCOP(totalBalance);
+  const currencies = [...new Set(accounts.map(a => a.currency))];
+  const totalCurrency = currencies.length === 1 ? currencies[0] : 'COP';
+  document.getElementById('kpi-total').textContent = fmtCurrency(totalBalance, totalCurrency);
   document.getElementById('kpi-accounts-count').textContent = `${accounts.length} cuentas activas`;
 
   renderTrendChart(trend);
