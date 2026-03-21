@@ -399,6 +399,15 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 /* FAB oculto por defecto (solo visible en mobile via media query) */
 .fab-tx { display: none; }
 
+.currency-opt {
+  display:block; width:100%; background:none; border:none;
+  color:var(--paper); font-family:var(--mono); font-size:0.72rem;
+  padding:0.6rem 0.75rem; text-align:left; cursor:pointer;
+  letter-spacing:0.04em; transition:background 0.15s;
+}
+.currency-opt:hover { background:rgba(200,245,58,0.07); color:var(--accent); }
+.currency-opt.active { color:var(--accent); }
+
 /* ─── Categorías ───────────────────────────────────────── */
 .cat-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
 .cat-tab {
@@ -639,6 +648,18 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
       </div>
       <div class="topbar-right">
         <select class="month-select" id="monthSelect" onchange="onMonthChange()"></select>
+        <div style="position:relative">
+          <button id="currencyBtn" onclick="toggleCurrencyMenu()" title="Moneda" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:0.7rem;padding:0.45rem 0.75rem;cursor:pointer;letter-spacing:0.06em;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">$ COP</button>
+          <div id="currencyMenu" style="display:none;position:absolute;right:0;top:calc(100% + 0.5rem);background:var(--ink2);border:1px solid var(--border);z-index:200;min-width:160px">
+            <div style="padding:0.5rem 0.75rem;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;border-bottom:1px solid var(--border)">MONEDA PREFERIDA</div>
+            <button onclick="setCurrency('COP','$')"  class="currency-opt">$ — Peso COP</button>
+            <button onclick="setCurrency('USD','US$')" class="currency-opt">US$ — Dólar</button>
+            <button onclick="setCurrency('EUR','€')"  class="currency-opt">€ — Euro</button>
+            <button onclick="setCurrency('GBP','£')"  class="currency-opt">£ — Libra</button>
+            <button onclick="setCurrency('MXN','MX$')" class="currency-opt">MX$ — Peso MXN</button>
+            <button onclick="setCurrency('ARS','AR$')" class="currency-opt">AR$ — Peso ARS</button>
+          </div>
+        </div>
         <button class="btn btn-accent" onclick="openTxModal()">+ Nueva transacción</button>
       </div>
     </div>
@@ -1086,6 +1107,34 @@ if (!token()) window.location.href = '/';
 // STATE
 // ═══════════════════════════════════════════════════════════
 let accounts = [], categories = [], currentMonth, currentYear;
+let primaryCurrency = localStorage.getItem('ft_currency') || 'COP';
+let primarySymbol   = localStorage.getItem('ft_symbol')   || '$';
+
+function fmt(n) { return fmtCurrency(n, primaryCurrency); }
+
+function toggleCurrencyMenu() {
+  const m = document.getElementById('currencyMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+function setCurrency(code, symbol) {
+  primaryCurrency = code;
+  primarySymbol   = symbol;
+  localStorage.setItem('ft_currency', code);
+  localStorage.setItem('ft_symbol', symbol);
+  document.getElementById('currencyBtn').textContent = `${symbol} ${code}`;
+  document.getElementById('currencyMenu').style.display = 'none';
+  document.querySelectorAll('.currency-opt').forEach(b => b.classList.toggle('active', b.textContent.includes(code)));
+  loadOverviewData();
+  renderAccounts();
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#currencyBtn') && !e.target.closest('#currencyMenu')) {
+    const m = document.getElementById('currencyMenu');
+    if (m) m.style.display = 'none';
+  }
+});
 let trendChart = null, categoryChart = null, aiDonut = null;
 
 function initMonthSelector() {
@@ -1161,6 +1210,7 @@ async function bootstrap() {
   document.getElementById('userEmailEl').textContent = user.email;
 
   initMonthSelector();
+  document.getElementById('currencyBtn').textContent = `${primarySymbol} ${primaryCurrency}`;
   await Promise.all([loadAccounts(), loadCategories()]);
   await loadOverviewData();
 }
@@ -1179,18 +1229,16 @@ async function loadOverviewData() {
     apiFetch('/api/v1/transactions?limit=8'),
   ]);
 
-  document.getElementById('kpi-income').textContent = fmtCOP(summary.income);
-  document.getElementById('kpi-expense').textContent = fmtCOP(summary.expense);
-  document.getElementById('kpi-balance').textContent = fmtCOP(summary.balance);
+  document.getElementById('kpi-income').textContent = fmt(summary.income);
+  document.getElementById('kpi-expense').textContent = fmt(summary.expense);
+  document.getElementById('kpi-balance').textContent = fmt(summary.balance);
   document.getElementById('kpi-income-count').textContent = `${summary.income_count} transacciones`;
   document.getElementById('kpi-expense-count').textContent = `${summary.expense_count} transacciones`;
   const savings = summary.income > 0 ? ((summary.income - summary.expense) / summary.income * 100).toFixed(1) : 0;
   document.getElementById('kpi-savings-rate').textContent = `Tasa de ahorro: ${savings}%`;
 
   const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-  const currencies = [...new Set(accounts.map(a => a.currency))];
-  const totalCurrency = currencies.length === 1 ? currencies[0] : 'COP';
-  document.getElementById('kpi-total').textContent = fmtCurrency(totalBalance, totalCurrency);
+  document.getElementById('kpi-total').textContent = fmt(totalBalance);
   document.getElementById('kpi-accounts-count').textContent = `${accounts.length} cuentas activas`;
 
   renderTrendChart(trend);
@@ -1261,7 +1309,7 @@ function renderRecentTx(txList) {
       <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Trans.'}[tx.transaction_type]}</span></td>
       <td>${fmtDate(tx.date)}</td>
       <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
-        ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
+        ${tx.transaction_type === 'income' ? '+' : '-'}${fmt(tx.amount)}
       </td>
     </tr>
   `).join('');
@@ -1296,7 +1344,7 @@ async function loadTransactions() {
       <td><span class="tx-type ${tx.transaction_type}">${{income:'Ingreso',expense:'Gasto',transfer:'Trans.'}[tx.transaction_type]}</span></td>
       <td>${fmtDate(tx.date)}</td>
       <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
-        ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
+        ${tx.transaction_type === 'income' ? '+' : '-'}${fmt(tx.amount)}
       </td>
       <td style="display:flex;gap:0.3rem">
         <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.6rem" onclick="openEditTxModal(${tx.id})">✎</button>
@@ -1360,8 +1408,8 @@ async function loadBudgets() {
           <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
         </div>
         <div class="budget-stats">
-          <span>Gastado: <strong style="color:${color}">${fmtCOP(b.spent)}</strong></span>
-          <span>Límite: <strong>${fmtCOP(b.amount)}</strong></span>
+          <span>Gastado: <strong style="color:${color}">${fmt(b.spent)}</strong></span>
+          <span>Límite: <strong>${fmt(b.amount)}</strong></span>
         </div>
         <div style="margin-top:0.5rem;font-size:0.62rem;color:${color}">${pct.toFixed(1)}% utilizado</div>
       </div>
@@ -1431,7 +1479,7 @@ let _editingTxId = null;
 function _populateTxModal() {
   const acctSel = document.getElementById('txAccount');
   const destSel = document.getElementById('txDest');
-  acctSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name} (${fmtCOP(a.balance)})</option>`).join('');
+  acctSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name} (${fmt(a.balance)})</option>`).join('');
   destSel.innerHTML = acctSel.innerHTML;
 }
 
