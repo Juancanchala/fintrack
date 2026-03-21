@@ -9,13 +9,15 @@ def _set_sqlite_pragma(dbapi_conn, connection_record):
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.close()
 
+_db_url = settings.database_url
+_is_sqlite = _db_url.startswith("sqlite")
 engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    _db_url,
+    **( {"connect_args": {"check_same_thread": False}, "poolclass": StaticPool} if _is_sqlite else {} ),
     echo=settings.DEBUG,
 )
-event.listen(engine, "connect", _set_sqlite_pragma)
+if _is_sqlite:
+    event.listen(engine, "connect", _set_sqlite_pragma)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):
