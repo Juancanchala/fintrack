@@ -925,10 +925,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 <div class="modal-overlay" id="accountModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Nueva cuenta</div>
+      <div class="modal-title" id="accountModalTitle">Nueva cuenta</div>
       <button class="modal-close" onclick="closeModal('accountModal')">✕</button>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="acctId"/>
       <div class="form-field">
         <label>Nombre</label>
         <input id="acctName" type="text" placeholder="Cuenta Nequi"/>
@@ -945,9 +946,20 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
           </select>
         </div>
         <div class="form-field">
-          <label>Saldo inicial (COP)</label>
-          <input id="acctBalance" type="number" placeholder="0" min="0"/>
+          <label>Moneda</label>
+          <select id="acctCurrency">
+            <option value="COP">COP — Peso colombiano</option>
+            <option value="USD">USD — Dólar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — Libra</option>
+            <option value="MXN">MXN — Peso mexicano</option>
+            <option value="ARS">ARS — Peso argentino</option>
+          </select>
         </div>
+      </div>
+      <div id="acctBalanceField" class="form-field">
+        <label>Saldo inicial</label>
+        <input id="acctBalance" type="number" placeholder="0" min="0"/>
       </div>
       <div class="form-row">
         <div class="form-field">
@@ -962,7 +974,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('accountModal')">Cancelar</button>
-      <button class="btn btn-accent" onclick="saveAccount()">Crear →</button>
+      <button class="btn btn-accent" id="acctSaveBtn" onclick="saveAccount()">Crear →</button>
     </div>
   </div>
 </div>
@@ -1301,6 +1313,10 @@ function renderAccounts() {
   }
   grid.innerHTML = accounts.map(a => `
     <div class="account-card" style="--acct-color:${a.color}">
+      <div style="position:absolute;top:0.75rem;right:0.75rem;display:flex;gap:0.4rem">
+        <button onclick="openAccountModal(${JSON.stringify(a).replace(/"/g,'&quot;')})" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:0.65rem;padding:0.2rem 0.5rem;cursor:pointer;border-radius:2px;letter-spacing:0.05em" title="Editar">✎</button>
+        <button onclick="deleteAccount(${a.id})" style="background:none;border:1px solid var(--border);color:var(--danger);font-size:0.65rem;padding:0.2rem 0.5rem;cursor:pointer;border-radius:2px" title="Eliminar">✕</button>
+      </div>
       <div class="account-icon">${a.icon}</div>
       <div class="account-name">${a.name}</div>
       <div class="account-type">${{checking:'Corriente',savings:'Ahorros',cash:'Efectivo',credit:'Crédito',investment:'Inversión'}[a.account_type] || a.account_type}</div>
@@ -1521,23 +1537,50 @@ async function saveTx() {
   }
 }
 
-function openAccountModal() {
-  document.getElementById('acctName').value = '';
-  document.getElementById('acctBalance').value = '0';
-  document.getElementById('acctIcon').value = '💳';
+function openAccountModal(account = null) {
+  document.getElementById('acctId').value = account ? account.id : '';
+  document.getElementById('acctName').value = account ? account.name : '';
+  document.getElementById('acctBalance').value = account ? account.balance : '0';
+  document.getElementById('acctIcon').value = account ? account.icon : '💳';
+  document.getElementById('acctColor').value = account ? account.color : '#6366f1';
+  document.getElementById('acctType').value = account ? account.account_type : 'checking';
+  document.getElementById('acctCurrency').value = account ? account.currency : 'COP';
+  document.getElementById('acctBalanceField').style.display = account ? 'none' : 'block';
+  document.getElementById('accountModalTitle').textContent = account ? 'Editar cuenta' : 'Nueva cuenta';
+  document.getElementById('acctSaveBtn').textContent = account ? 'Guardar →' : 'Crear →';
   openModal('accountModal');
 }
 
+async function deleteAccount(id) {
+  if (!confirm('¿Eliminar esta cuenta? Las transacciones asociadas se mantendrán.')) return;
+  try {
+    await apiFetch(`/api/v1/accounts/${id}`, { method: 'DELETE' });
+    showToast('Cuenta eliminada');
+    await loadAccounts();
+    renderAccounts();
+    loadOverviewData();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
 async function saveAccount() {
+  const id           = document.getElementById('acctId').value;
   const name         = document.getElementById('acctName').value.trim();
   const balance      = parseFloat(document.getElementById('acctBalance').value) || 0;
   const account_type = document.getElementById('acctType').value;
   const icon         = document.getElementById('acctIcon').value || '💳';
   const color        = document.getElementById('acctColor').value;
+  const currency     = document.getElementById('acctCurrency').value;
   if (!name) return showToast('Ingresa un nombre', 'error');
   try {
-    await apiFetch('/api/v1/accounts', { method: 'POST', body: JSON.stringify({ name, balance, account_type, icon, color, currency: 'COP' }) });
-    showToast('Cuenta creada ✓');
+    if (id) {
+      await apiFetch(`/api/v1/accounts/${id}`, { method: 'PUT', body: JSON.stringify({ name, account_type, icon, color, currency }) });
+      showToast('Cuenta actualizada ✓');
+    } else {
+      await apiFetch('/api/v1/accounts', { method: 'POST', body: JSON.stringify({ name, balance, account_type, icon, color, currency }) });
+      showToast('Cuenta creada ✓');
+    }
     closeModal('accountModal');
     await loadAccounts();
     renderAccounts();

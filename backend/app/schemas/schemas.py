@@ -30,6 +30,13 @@ class AccountCreate(BaseModel):
     color: Optional[str] = "#6366f1"
     icon: Optional[str] = "💳"
 
+class AccountUpdate(BaseModel):
+    name: str
+    account_type: str = "checking"
+    currency: str = "COP"
+    color: Optional[str] = "#6366f1"
+    icon: Optional[str] = "💳"
+
 class AccountOut(BaseModel):
     id: int
     name: str

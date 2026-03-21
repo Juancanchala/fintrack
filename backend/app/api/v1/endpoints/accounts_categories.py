@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.dependencies import get_current_user, get_db
 from app.models.models import User, Account, Category
-from app.schemas.schemas import AccountCreate, AccountOut, CategoryCreate, CategoryOut
+from app.schemas.schemas import AccountCreate, AccountUpdate, AccountOut, CategoryCreate, CategoryOut
 
 router = APIRouter(tags=["accounts & categories"])
 
@@ -15,6 +15,20 @@ def list_accounts(db: Session = Depends(get_db), current_user: User = Depends(ge
 def create_account(payload: AccountCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     account = Account(user_id=current_user.id, **payload.model_dump())
     db.add(account)
+    db.commit()
+    db.refresh(account)
+    return account
+
+@router.put("/accounts/{account_id}", response_model=AccountOut)
+def update_account(account_id: int, payload: AccountUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    account = db.query(Account).filter_by(id=account_id, user_id=current_user.id, is_active=True).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    account.name = payload.name
+    account.account_type = payload.account_type
+    account.color = payload.color
+    account.icon = payload.icon
+    account.currency = payload.currency
     db.commit()
     db.refresh(account)
     return account
