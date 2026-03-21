@@ -75,6 +75,24 @@ class TransactionCreate(BaseModel):
             raise ValueError("Amount must be positive")
         return v
 
+class TransactionUpdate(BaseModel):
+    account_id: int
+    category_id: Optional[int] = None
+    destination_account_id: Optional[int] = None
+    transaction_type: TransactionType
+    amount: float
+    description: Optional[str] = None
+    notes: Optional[str] = None
+    date: Optional[datetime] = None
+    is_recurring: bool = False
+
+    @field_validator("amount")
+    @classmethod
+    def amount_positive(cls, v):
+        if v <= 0:
+            raise ValueError("Amount must be positive")
+        return v
+
 class TransactionOut(BaseModel):
     id: int
     account_id: int

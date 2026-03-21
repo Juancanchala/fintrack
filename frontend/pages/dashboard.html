@@ -395,6 +395,8 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 }
 .month-select option { background: var(--ink2); }
 
+/* FAB oculto por defecto (solo visible en mobile via media query) */
+.fab-tx { display: none; }
 
 /* ═══════════════════════════════════════════════
    RESPONSIVE — TABLET  (≤ 900px)
@@ -483,6 +485,14 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 
   .tx-table th, .tx-table td { padding: 0.6rem 0.75rem; }
 
+  /* Botones de acción más grandes para tocar en móvil */
+  .tx-table td:last-child button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
   /* ── Botón flotante de nueva transacción ── */
   .fab-tx {
     display: flex;
@@ -539,8 +549,6 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   .bottom-nav-item .bn-icon { font-size: 1rem; }
 }
 
-/* ── FAB de tx: solo mobile ── */
-.fab-tx { display: none; }
 </style>
 </head>
 <body>
@@ -767,7 +775,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 <div class="modal-overlay" id="txModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Nueva transacción</div>
+      <div class="modal-title" id="txModalTitle">Nueva transacción</div>
       <button class="modal-close" onclick="closeModal('txModal')">✕</button>
     </div>
     <div class="modal-body">
@@ -1139,6 +1147,8 @@ function renderRecentTx(txList) {
 // ═══════════════════════════════════════════════════════════
 // TRANSACTIONS PAGE
 // ═══════════════════════════════════════════════════════════
+let _txCache = {};
+
 async function loadTransactions() {
   const typeFilter = document.getElementById('txTypeFilter').value;
   let url = `/api/v1/transactions?limit=100`;
@@ -1146,6 +1156,9 @@ async function loadTransactions() {
 
   const txList = await apiFetch(url).catch(() => []);
   document.getElementById('txPageCount').textContent = `${txList.length} transacciones`;
+
+  _txCache = {};
+  txList.forEach(tx => _txCache[tx.id] = tx);
 
   const tbody = document.getElementById('txTableBody');
   if (!txList.length) {
@@ -1162,7 +1175,8 @@ async function loadTransactions() {
       <td style="text-align:right" class="${tx.transaction_type === 'income' ? 'amount-income' : 'amount-expense'}">
         ${tx.transaction_type === 'income' ? '+' : '-'}${fmtCOP(tx.amount)}
       </td>
-      <td>
+      <td style="display:flex;gap:0.3rem">
+        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.6rem" onclick="openEditTxModal(${tx.id})">✎</button>
         <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.6rem" onclick="deleteTx(${tx.id})">✕</button>
       </td>
     </tr>
@@ -1285,15 +1299,24 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
-function openTxModal() {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('txDate').value = now.toISOString().slice(0,16);
+let _editingTxId = null;
 
+function _populateTxModal() {
   const acctSel = document.getElementById('txAccount');
   const destSel = document.getElementById('txDest');
   acctSel.innerHTML = accounts.map(a => `<option value="${a.id}">${a.icon} ${a.name} (${fmtCOP(a.balance)})</option>`).join('');
   destSel.innerHTML = acctSel.innerHTML;
+}
+
+function openTxModal() {
+  _editingTxId = null;
+  document.getElementById('txModalTitle').textContent = 'Nueva transacción';
+
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('txDate').value = now.toISOString().slice(0,16);
+
+  _populateTxModal();
 
   const catSel = document.getElementById('txCategory');
   const expCats = categories.filter(c => c.transaction_type === 'expense');
@@ -1305,6 +1328,42 @@ function openTxModal() {
   document.getElementById('txNotes').value = '';
 
   onTxTypeChange();
+  openModal('txModal');
+}
+
+function openEditTxModal(id) {
+  const tx = _txCache[id];
+  if (!tx) return;
+
+  _editingTxId = id;
+  document.getElementById('txModalTitle').textContent = 'Editar transacción';
+
+  _populateTxModal();
+
+  document.getElementById('txType').value = tx.transaction_type;
+  onTxTypeChange();
+
+  document.getElementById('txAmount').value = tx.amount;
+  document.getElementById('txDesc').value = tx.description || '';
+  document.getElementById('txNotes').value = tx.notes || '';
+
+  // Fecha local
+  const d = new Date(tx.date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  document.getElementById('txDate').value = d.toISOString().slice(0,16);
+
+  document.getElementById('txAccount').value = tx.account_id;
+
+  if (tx.transaction_type === 'transfer') {
+    document.getElementById('txDest').value = tx.destination_account_id || '';
+  } else {
+    // Poblar categorías del tipo correcto y seleccionar la actual
+    const cats = categories.filter(c => c.transaction_type === tx.transaction_type);
+    const catSel = document.getElementById('txCategory');
+    catSel.innerHTML = cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    if (tx.category_id) catSel.value = tx.category_id;
+  }
+
   openModal('txModal');
 }
 
@@ -1343,8 +1402,14 @@ async function saveTx() {
   }
 
   try {
-    await apiFetch('/api/v1/transactions', { method: 'POST', body: JSON.stringify(payload) });
-    showToast('Transacción guardada ✓');
+    if (_editingTxId) {
+      await apiFetch(`/api/v1/transactions/${_editingTxId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      showToast('Transacción actualizada ✓');
+    } else {
+      await apiFetch('/api/v1/transactions', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Transacción guardada ✓');
+    }
+    _editingTxId = null;
     closeModal('txModal');
     await loadAccounts();
     loadOverviewData();

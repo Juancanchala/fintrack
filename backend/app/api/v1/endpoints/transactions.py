@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.dependencies import get_current_user, get_db
 from app.models.models import User, Transaction, Account, TransactionType
-from app.schemas.schemas import TransactionCreate, TransactionOut
+from app.schemas.schemas import TransactionCreate, TransactionUpdate, TransactionOut
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -50,6 +50,50 @@ def create_transaction(payload: TransactionCreate, db: Session = Depends(get_db)
         _adjust_balance(account, payload.transaction_type, payload.amount)
     tx = Transaction(**data)
     db.add(tx)
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+@router.put("/{transaction_id}", response_model=TransactionOut)
+def update_transaction(transaction_id: int, payload: TransactionUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    tx = db.query(Transaction).filter_by(id=transaction_id, user_id=current_user.id).first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Revertir ajustes de balance anteriores
+    old_account = db.query(Account).filter_by(id=tx.account_id).first()
+    if tx.transaction_type == TransactionType.transfer:
+        old_dest = db.query(Account).filter_by(id=tx.destination_account_id).first()
+        if old_account:
+            old_account.balance += tx.amount
+        if old_dest:
+            old_dest.balance -= tx.amount
+    else:
+        if old_account:
+            _adjust_balance(old_account, tx.transaction_type, tx.amount, reverse=True)
+
+    # Aplicar nuevos ajustes de balance
+    new_account = db.query(Account).filter_by(id=payload.account_id, user_id=current_user.id).first()
+    if not new_account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    if payload.transaction_type == TransactionType.transfer:
+        if not payload.destination_account_id:
+            raise HTTPException(status_code=400, detail="destination_account_id required for transfers")
+        new_dest = db.query(Account).filter_by(id=payload.destination_account_id, user_id=current_user.id).first()
+        if not new_dest:
+            raise HTTPException(status_code=404, detail="Destination account not found")
+        new_account.balance -= payload.amount
+        new_dest.balance += payload.amount
+    else:
+        _adjust_balance(new_account, payload.transaction_type, payload.amount)
+
+    # Actualizar campos de la transacción
+    for field, value in payload.model_dump().items():
+        setattr(tx, field, value)
+    if not tx.date:
+        tx.date = datetime.utcnow()
+
     db.commit()
     db.refresh(tx)
     return tx
