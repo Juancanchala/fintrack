@@ -296,6 +296,11 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   margin-bottom: 1rem; padding: 1rem;
   background: var(--ink3); border-left: 3px solid var(--accent);
 }
+.ai-section-title {
+  font-size: 0.65rem; letter-spacing: 0.1em; color: var(--accent);
+  font-family: var(--mono); margin: 0.75rem 0 0.25rem;
+}
+.ai-insight br + br { display: block; margin-top: 0.25rem; content: ''; }
 .ai-suggestions { display: flex; flex-direction: column; gap: 0.5rem; }
 .ai-suggestion {
   display: flex; align-items: flex-start; gap: 0.75rem;
@@ -1112,6 +1117,15 @@ let primarySymbol   = localStorage.getItem('ft_symbol')   || '$';
 
 function fmt(n) { return fmtCurrency(n, primaryCurrency); }
 
+function formatAIText(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^(📊|📈|📉|💰|🔍|⚠️|✅|🎯|💡|🏦|📌|🔎)\s*([A-ZÁÉÍÓÚÑ ]+)$/gm, '<div class="ai-section-title">$1 $2</div>')
+    .replace(/\n/g, '<br>');
+}
+
 function toggleCurrencyMenu() {
   const m = document.getElementById('currencyMenu');
   m.style.display = m.style.display === 'none' ? 'block' : 'none';
@@ -1453,9 +1467,9 @@ async function askAI() {
       method: 'POST',
       body: JSON.stringify({ question: question || null }),
     });
-    document.getElementById('aiInsight').textContent = data.insight;
+    document.getElementById('aiInsight').innerHTML = formatAIText(data.insight);
     document.getElementById('aiSuggestions').innerHTML = data.suggestions
-      .map(s => `<div class="ai-suggestion">${s}</div>`).join('');
+      .map(s => `<div class="ai-suggestion">✦ ${s}</div>`).join('');
     result.style.display = 'block';
   } catch(e) {
     showToast(e.message, 'error');
@@ -2033,7 +2047,7 @@ function appendMessage(text, role, txConfirm = null) {
   const msgs   = document.getElementById('chatMessages');
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}${txConfirm ? ' success' : ''}`;
-  bubble.innerHTML = text.replace(/\n/g, '<br/>');
+  bubble.innerHTML = formatAIText(text);
   if (txConfirm) {
     const conf = document.createElement('div');
     conf.className = 'chat-tx-confirm';

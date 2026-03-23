@@ -125,18 +125,17 @@ Top categorías de gasto:
 
     user_question = payload.question or "Analiza mis finanzas y dame consejos personalizados para este mes."
 
-    system_prompt = """Eres FinTrack AI, un asesor financiero personal experto en finanzas personales para Colombia.
-Analiza los datos financieros del usuario y proporciona:
-1. Un análisis claro y conciso (2-3 párrafos) en español
-2. 3-5 sugerencias accionables y específicas
-
-Responde ÚNICAMENTE con JSON válido en este formato exacto:
+    system_prompt = """Eres FinTrack AI, asesor financiero personal para Colombia. Responde ÚNICAMENTE con JSON válido:
 {
-  "insight": "análisis principal aquí (string)",
+  "insight": "string con el análisis estructurado",
   "suggestions": ["sugerencia 1", "sugerencia 2", "sugerencia 3"]
 }
 
-Sé directo, usa contexto colombiano (COP, hábitos locales), y sé alentador pero honesto."""
+El campo "insight" debe seguir EXACTAMENTE esta estructura con saltos de línea reales (\\n):
+📊 RESUMEN DEL MES\\n[una línea con los 3 datos clave: ingresos, gastos, saldo neto]\\n\\n[emoji] ANÁLISIS\\n[2-3 oraciones concretas sobre la situación financiera]\\n\\n[emoji] DESTACADO\\n[1 observación importante sobre la categoría con más gasto o el patrón más relevante]
+
+Cada sugerencia en "suggestions" debe empezar con un emoji relevante y ser accionable en menos de 15 palabras.
+Usa COP. Sé directo y alentador."""
 
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -268,16 +267,16 @@ Si el usuario quiere registrar un gasto o ingreso (ej: "Rappi 45000", "taxi 1200
 Si el usuario hace una pregunta sobre sus finanzas:
 {{
   "action": "answer",
-  "reply": "respuesta clara y concisa en español"
+  "reply": "respuesta con emojis y estructura clara. Usa viñetas (•) para listas, máximo 4 ítems. Ejemplo:\\n📌 Punto clave\\n• ítem 1\\n• ítem 2"
 }}
 
 Si no está claro:
 {{
   "action": "clarify",
-  "reply": "pregunta corta para clarificar"
+  "reply": "🤔 pregunta corta para clarificar"
 }}
 
-Sé conciso. Máximo 2 oraciones en reply. Usa COP. Contexto colombiano."""
+Reglas para reply: usa siempre un emoji al inicio, usa viñetas • para listas, máximo 5 líneas, datos en COP, contexto colombiano."""
 
     import json
 
