@@ -2083,7 +2083,10 @@ async function sendChat() {
     setTyping(false);
     appendMessage(res.reply, 'bot', res.transaction_created || null);
     chatHistory.push({ role: 'assistant', content: res.reply });
-    if (res.transaction_created) { await loadAccounts(); loadOverviewData(); }
+    if (res.transaction_created) { await loadAccounts(); await loadOverviewData(); }
+    if (res.account_created)     { await loadAccounts(); await loadOverviewData(); }
+    if (res.budget_created)      { await loadBudgets?.(); await loadOverviewData(); }
+    if (res.category_created)    { await loadCategories(); }
   } catch(e) {
     setTyping(false);
     appendMessage('Error al conectar. Intenta de nuevo.', 'bot');

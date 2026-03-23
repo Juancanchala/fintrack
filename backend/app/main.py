@@ -172,6 +172,9 @@ class ChatResponse(BaseModel):
     reply: str
     action: Optional[str] = None
     transaction_created: Optional[dict] = None
+    account_created: Optional[dict] = None
+    budget_created: Optional[dict] = None
+    category_created: Optional[dict] = None
 
 @app.post(f"{API_PREFIX}/ai/chat", response_model=ChatResponse)
 async def ai_chat(
@@ -248,12 +251,12 @@ Categorías de ingreso disponibles: {cats_income_str}
 Cuenta por defecto id: {default_account_id}
 
 INSTRUCCIONES:
-Analiza el mensaje del usuario y responde ÚNICAMENTE con JSON válido:
+Analiza el mensaje del usuario y responde ÚNICAMENTE con JSON válido según la intención:
 
-Si el usuario quiere registrar un gasto o ingreso (ej: "Rappi 45000", "taxi 12000", "me pagaron 500000"):
+1. REGISTRAR GASTO/INGRESO (ej: "Rappi 45000", "taxi 12000", "me pagaron 500000"):
 {{
   "action": "create_transaction",
-  "reply": "mensaje confirmando lo que vas a registrar",
+  "reply": "✅ Registrando: [descripción] por $[monto]",
   "transaction": {{
     "amount": 45000,
     "transaction_type": "expense",
@@ -264,19 +267,60 @@ Si el usuario quiere registrar un gasto o ingreso (ej: "Rappi 45000", "taxi 1200
   }}
 }}
 
-Si el usuario hace una pregunta sobre sus finanzas:
+2. CREAR CUENTA (ej: "crea una cuenta de ahorros", "nueva cuenta Nequi con 500000"):
 {{
-  "action": "answer",
-  "reply": "respuesta con emojis y estructura clara. Usa viñetas (•) para listas, máximo 4 ítems. Ejemplo:\\n📌 Punto clave\\n• ítem 1\\n• ítem 2"
+  "action": "create_account",
+  "reply": "✅ Creando cuenta [nombre]",
+  "account": {{
+    "name": "Nequi",
+    "account_type": "savings",
+    "balance": 500000,
+    "currency": "COP",
+    "icon": "💳",
+    "color": "#6366f1"
+  }}
+}}
+account_type puede ser: checking, savings, cash, investment, credit
+
+3. CREAR PRESUPUESTO (ej: "crea presupuesto de alimentación por 500000"):
+{{
+  "action": "create_budget",
+  "reply": "✅ Creando presupuesto de [categoría] por $[monto]",
+  "budget": {{
+    "name": "Alimentación mensual",
+    "category_id": 1,
+    "amount": 500000,
+    "period": "monthly",
+    "alert_threshold": 0.8
+  }}
 }}
 
-Si no está claro:
+4. CREAR CATEGORÍA (ej: "agrega categoría Mascota de gasto"):
+{{
+  "action": "create_category",
+  "reply": "✅ Creando categoría [nombre]",
+  "category": {{
+    "name": "Mascota",
+    "transaction_type": "expense",
+    "icon": "🐾",
+    "color": "#6366f1"
+  }}
+}}
+transaction_type: "expense" o "income"
+
+5. PREGUNTA sobre finanzas:
+{{
+  "action": "answer",
+  "reply": "respuesta con emojis. Usa viñetas (•) para listas, máximo 4 ítems."
+}}
+
+6. NO ESTÁ CLARO:
 {{
   "action": "clarify",
   "reply": "🤔 pregunta corta para clarificar"
 }}
 
-Reglas para reply: usa siempre un emoji al inicio, usa viñetas • para listas, máximo 5 líneas, datos en COP, contexto colombiano."""
+Reglas: emoji al inicio del reply, viñetas • para listas, máximo 5 líneas, datos en COP, contexto colombiano."""
 
     import json
 
@@ -333,7 +377,85 @@ Reglas para reply: usa siempre un emoji al inicio, usa viñetas • para listas,
                         "description": new_tx.description,
                     }
 
-        return ChatResponse(reply=reply, action=action, transaction_created=transaction_created)
+        account_created = None
+        budget_created = None
+        category_created = None
+
+        if action == "create_account" and "account" in parsed:
+            from app.models.models import AccountType
+            a_data = parsed["account"]
+            try:
+                acc_type = a_data.get("account_type", "checking")
+                new_acc = Account(
+                    user_id=current_user.id,
+                    name=a_data.get("name", "Nueva cuenta"),
+                    account_type=acc_type,
+                    balance=float(a_data.get("balance", 0)),
+                    currency=a_data.get("currency", "COP"),
+                    icon=a_data.get("icon", "💳"),
+                    color=a_data.get("color", "#6366f1"),
+                )
+                db.add(new_acc)
+                db.commit()
+                db.refresh(new_acc)
+                account_created = {"id": new_acc.id, "name": new_acc.name, "balance": new_acc.balance}
+            except Exception:
+                reply = "⚠️ No pude crear la cuenta. Intenta desde la pestaña Cuentas."
+
+        elif action == "create_budget" and "budget" in parsed:
+            from app.models.models import Budget, BudgetPeriod as BP
+            b_data = parsed["budget"]
+            try:
+                cat_id = b_data.get("category_id")
+                cat = db.query(Category).filter_by(id=cat_id, user_id=current_user.id).first() if cat_id else None
+                if not cat:
+                    exp_cats = [c for c in categories if c.transaction_type.value == "expense"]
+                    cat = exp_cats[0] if exp_cats else None
+                if cat:
+                    new_budget = Budget(
+                        user_id=current_user.id,
+                        category_id=cat.id,
+                        name=b_data.get("name", f"Presupuesto {cat.name}"),
+                        amount=float(b_data.get("amount", 0)),
+                        period=BP(b_data.get("period", "monthly")),
+                        alert_threshold=float(b_data.get("alert_threshold", 0.8)),
+                        start_date=datetime.utcnow(),
+                    )
+                    db.add(new_budget)
+                    db.commit()
+                    db.refresh(new_budget)
+                    budget_created = {"id": new_budget.id, "name": new_budget.name, "amount": new_budget.amount}
+                else:
+                    reply = "⚠️ No encontré la categoría. Créala primero o especifica el nombre."
+            except Exception:
+                reply = "⚠️ No pude crear el presupuesto. Intenta desde la pestaña Presupuestos."
+
+        elif action == "create_category" and "category" in parsed:
+            c_data = parsed["category"]
+            try:
+                tx_type = TransactionType(c_data.get("transaction_type", "expense"))
+                new_cat = Category(
+                    user_id=current_user.id,
+                    name=c_data.get("name", "Nueva categoría"),
+                    transaction_type=tx_type,
+                    icon=c_data.get("icon", "📁"),
+                    color=c_data.get("color", "#6366f1"),
+                    is_default=False,
+                )
+                db.add(new_cat)
+                db.commit()
+                db.refresh(new_cat)
+                category_created = {"id": new_cat.id, "name": new_cat.name, "icon": new_cat.icon}
+            except Exception:
+                reply = "⚠️ No pude crear la categoría. Intenta desde la pestaña Categorías."
+
+        return ChatResponse(
+            reply=reply, action=action,
+            transaction_created=transaction_created,
+            account_created=account_created,
+            budget_created=budget_created,
+            category_created=category_created,
+        )
 
     except Exception as e:
         return ChatResponse(reply="Hubo un error procesando tu mensaje. Intenta de nuevo.", action="error")
