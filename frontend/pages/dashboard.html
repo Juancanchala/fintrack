@@ -766,7 +766,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
       <!-- ── ACCOUNTS PAGE ── -->
       <div id="page-accounts" class="page">
         <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
-          <button class="btn btn-accent" onclick="openAccountModal()">+ Nueva cuenta</button>
+          <button class="btn btn-accent" onclick="openAccountModal()">+ Agregar cuenta o billetera</button>
         </div>
         <div class="accounts-grid" id="accountsGrid">
           <div class="empty"><div class="empty-icon">🏦</div>Cargando cuentas…</div>
@@ -907,9 +907,9 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
       <div class="form-field">
         <label>Tipo</label>
         <select id="txType" onchange="onTxTypeChange()">
-          <option value="expense">Gasto</option>
-          <option value="income">Ingreso</option>
-          <option value="transfer">Transferencia</option>
+          <option value="expense">Gasto — gasté dinero</option>
+          <option value="income">Ingreso — recibí dinero</option>
+          <option value="transfer">Transferencia — moví entre cuentas</option>
         </select>
       </div>
       <div class="form-field">
@@ -958,8 +958,8 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
     <div class="modal-body">
       <input type="hidden" id="acctId"/>
       <div class="form-field">
-        <label>Nombre</label>
-        <input id="acctName" type="text" placeholder="Cuenta Nequi"/>
+        <label>Nombre <span style="font-size:0.65rem;color:var(--muted)">(banco o billetera)</span></label>
+        <input id="acctName" type="text" placeholder="Ej: Nequi, Bancolombia, Efectivo"/>
       </div>
       <div class="form-row">
         <div class="form-field">
@@ -985,7 +985,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
         </div>
       </div>
       <div id="acctBalanceField" class="form-field">
-        <label>Saldo inicial</label>
+        <label>Saldo actual <span style="font-size:0.65rem;color:var(--muted)">(¿cuánto tienes ahí hoy?)</span></label>
         <input id="acctBalance" type="number" placeholder="0" min="0"/>
       </div>
       <div class="form-row">
@@ -1178,7 +1178,7 @@ function onMonthChange() {
 const pageTitles = {
   overview:     ['Resumen',        'Vista general de tus finanzas'],
   transactions: ['Transacciones',  'Historial completo de movimientos'],
-  accounts:     ['Cuentas',        'Gestiona tus cuentas y saldos'],
+  accounts:     ['Cuentas',        '¿Dónde guardas tu dinero? (Bancolombia, Nequi, Efectivo...)'],
   budgets:      ['Presupuestos',   'Control de límites de gasto'],
   categories:   ['Categorías',     'Organiza y personaliza tus categorías'],
   ai:           ['IA Insights',    'Análisis inteligente con Claude'],
