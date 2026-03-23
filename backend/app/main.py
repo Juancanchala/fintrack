@@ -175,6 +175,8 @@ class ChatResponse(BaseModel):
     account_created: Optional[dict] = None
     budget_created: Optional[dict] = None
     category_created: Optional[dict] = None
+    updated: Optional[bool] = None
+    deleted: Optional[bool] = None
 
 @app.post(f"{API_PREFIX}/ai/chat", response_model=ChatResponse)
 async def ai_chat(
@@ -308,18 +310,43 @@ account_type puede ser: checking, savings, cash, investment, credit
 }}
 transaction_type: "expense" o "income"
 
-5. PREGUNTA sobre finanzas:
+5. EDITAR CUENTA (ej: "cambia el nombre de Nequi a Bancolombia", "actualiza saldo de Sueldo a 2000000"):
+{{
+  "action": "update_account",
+  "reply": "✏️ Actualizando cuenta [nombre]",
+  "account_id": 1,
+  "account": {{"name": "Bancolombia", "account_type": "checking", "balance": 2000000, "currency": "COP", "icon": "💳", "color": "#6366f1"}}
+}}
+Usa el id de la cuenta del contexto. Mantén los campos no mencionados igual.
+
+6. EDITAR TRANSACCIÓN (ej: "cambia el monto del último taxi a 15000"):
+{{
+  "action": "update_transaction",
+  "reply": "✏️ Actualizando transacción",
+  "transaction_id": 1,
+  "transaction": {{"amount": 15000, "transaction_type": "expense", "category_id": 1, "account_id": {default_account_id}, "description": "Taxi", "date": "{now.isoformat()}"}}
+}}
+
+7. ELIMINAR (ej: "elimina la cuenta Nequi", "borra el presupuesto de alimentación", "elimina la categoría Mascota"):
+{{
+  "action": "delete_account",  // o delete_transaction, delete_budget, delete_category
+  "reply": "🗑️ Eliminando [elemento]",
+  "target_id": 1
+}}
+
+8. PREGUNTA sobre finanzas:
 {{
   "action": "answer",
   "reply": "respuesta con emojis. Usa viñetas (•) para listas, máximo 4 ítems."
 }}
 
-6. NO ESTÁ CLARO:
+9. NO ESTÁ CLARO:
 {{
   "action": "clarify",
   "reply": "🤔 pregunta corta para clarificar"
 }}
 
+Cuentas disponibles con sus IDs: {accounts_info}
 Reglas: emoji al inicio del reply, viñetas • para listas, máximo 5 líneas, datos en COP, contexto colombiano."""
 
     import json
@@ -449,12 +476,112 @@ Reglas: emoji al inicio del reply, viñetas • para listas, máximo 5 líneas, 
             except Exception:
                 reply = "⚠️ No pude crear la categoría. Intenta desde la pestaña Categorías."
 
+        updated = None
+        deleted = None
+
+        if action == "update_account" and "account" in parsed:
+            acc = db.query(Account).filter_by(id=parsed.get("account_id"), user_id=current_user.id).first()
+            if not acc:
+                acc = next((a for a in accounts if a.name.lower() in parsed.get("reply","").lower()), None)
+            if acc:
+                a_data = parsed["account"]
+                acc.name = a_data.get("name", acc.name)
+                acc.account_type = a_data.get("account_type", acc.account_type)
+                acc.currency = a_data.get("currency", acc.currency)
+                acc.icon = a_data.get("icon", acc.icon)
+                acc.color = a_data.get("color", acc.color)
+                if "balance" in a_data:
+                    acc.balance = float(a_data["balance"])
+                db.commit()
+                updated = True
+            else:
+                reply = "⚠️ No encontré esa cuenta."
+
+        elif action == "update_transaction" and "transaction" in parsed:
+            from app.models.models import Transaction as Tx
+            tx = db.query(Tx).filter_by(id=parsed.get("transaction_id"), user_id=current_user.id).first()
+            if tx:
+                t_data = parsed["transaction"]
+                old_amount = tx.amount
+                old_type = tx.transaction_type
+                acc = db.query(Account).filter_by(id=tx.account_id).first()
+                if acc:
+                    if old_type == TransactionType.income:
+                        acc.balance -= old_amount
+                    else:
+                        acc.balance += old_amount
+                tx.amount = float(t_data.get("amount", tx.amount))
+                tx.transaction_type = TransactionType(t_data.get("transaction_type", tx.transaction_type.value))
+                tx.description = t_data.get("description", tx.description)
+                tx.category_id = t_data.get("category_id", tx.category_id)
+                if acc:
+                    if tx.transaction_type == TransactionType.income:
+                        acc.balance += tx.amount
+                    else:
+                        acc.balance -= tx.amount
+                db.commit()
+                updated = True
+            else:
+                reply = "⚠️ No encontré esa transacción."
+
+        elif action == "delete_account":
+            acc = db.query(Account).filter_by(id=parsed.get("target_id"), user_id=current_user.id).first()
+            if not acc:
+                acc = next((a for a in accounts if a.name.lower() in payload.message.lower()), None)
+            if acc:
+                acc.is_active = False
+                db.commit()
+                deleted = True
+            else:
+                reply = "⚠️ No encontré esa cuenta."
+
+        elif action == "delete_transaction":
+            from app.models.models import Transaction as Tx
+            tx = db.query(Tx).filter_by(id=parsed.get("target_id"), user_id=current_user.id).first()
+            if tx:
+                acc = db.query(Account).filter_by(id=tx.account_id).first()
+                if acc:
+                    if tx.transaction_type == TransactionType.income:
+                        acc.balance -= tx.amount
+                    else:
+                        acc.balance += tx.amount
+                db.delete(tx)
+                db.commit()
+                deleted = True
+            else:
+                reply = "⚠️ No encontré esa transacción."
+
+        elif action == "delete_budget":
+            from app.models.models import Budget
+            budget = db.query(Budget).filter_by(id=parsed.get("target_id"), user_id=current_user.id).first()
+            if not budget:
+                budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.name.ilike(f"%{payload.message}%")).first()
+            if budget:
+                db.delete(budget)
+                db.commit()
+                deleted = True
+            else:
+                reply = "⚠️ No encontré ese presupuesto."
+
+        elif action == "delete_category":
+            cat = db.query(Category).filter_by(id=parsed.get("target_id"), user_id=current_user.id).first()
+            if not cat:
+                cat = db.query(Category).filter(Category.user_id == current_user.id, Category.name.ilike(f"%{payload.message}%")).first()
+            if cat:
+                db.delete(cat)
+                db.commit()
+                deleted = True
+            else:
+                reply = "⚠️ No encontré esa categoría."
+
         return ChatResponse(
             reply=reply, action=action,
             transaction_created=transaction_created,
             account_created=account_created,
             budget_created=budget_created,
             category_created=category_created,
+            updated=updated,
+            deleted=deleted,
         )
 
     except Exception as e:

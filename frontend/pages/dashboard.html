@@ -2087,6 +2087,8 @@ async function sendChat() {
     if (res.account_created)     { await loadAccounts(); await loadOverviewData(); }
     if (res.budget_created)      { await loadBudgets?.(); await loadOverviewData(); }
     if (res.category_created)    { await loadCategories(); }
+    if (res.updated)             { await loadAccounts(); await loadOverviewData(); loadTransactions?.(); }
+    if (res.deleted)             { await loadAccounts(); await loadOverviewData(); loadTransactions?.(); }
   } catch(e) {
     setTyping(false);
     appendMessage('Error al conectar. Intenta de nuevo.', 'bot');
