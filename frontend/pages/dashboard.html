@@ -404,6 +404,30 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
 /* FAB oculto por defecto (solo visible en mobile via media query) */
 .fab-tx { display: none; }
 
+/* ─── Help Modal ─── */
+.help-tab {
+  flex:1; background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--muted); font-family:var(--mono); font-size:0.65rem;
+  padding:0.65rem 0.25rem; cursor:pointer; letter-spacing:0.05em; transition:all 0.15s;
+}
+.help-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.help-tab:hover { color:var(--paper); }
+.help-step { display:none; padding:1.5rem; text-align:center; }
+.help-step.active { display:block; }
+.help-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+.help-title { font-size:1rem; letter-spacing:0.04em; margin-bottom:0.5rem; color:var(--paper); }
+.help-desc { font-size:0.75rem; color:var(--muted); line-height:1.7; margin-bottom:1rem; }
+.help-examples { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; margin-bottom:1rem; }
+.help-ex {
+  background:var(--ink3); border:1px solid var(--border);
+  border-radius:4px; padding:0.4rem 0.75rem;
+  font-size:0.7rem; color:var(--paper); text-align:left; line-height:1.5;
+}
+.help-action {
+  font-size:0.72rem; color:var(--muted); background:var(--ink3);
+  border-left:3px solid var(--accent); padding:0.6rem 0.85rem; text-align:left;
+}
+
 .currency-opt {
   display:block; width:100%; background:none; border:none;
   color:var(--paper); font-family:var(--mono); font-size:0.72rem;
@@ -665,6 +689,7 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
             <button onclick="setCurrency('ARS','AR$')" class="currency-opt">AR$ — Peso ARS</button>
           </div>
         </div>
+        <button onclick="openHelp()" title="Ayuda" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:0.72rem;width:32px;height:32px;cursor:pointer;border-radius:50%;transition:all 0.15s;flex-shrink:0" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">?</button>
         <button class="btn btn-accent" onclick="openTxModal()">+ Nueva transacción</button>
       </div>
     </div>
@@ -948,6 +973,108 @@ html, body { height: 100%; background: var(--ink); color: var(--paper); font-fam
   </div>
 </div>
 
+<!-- ── HELP MODAL ── -->
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">¿Cómo usar FinTrack?</div>
+      <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- Steps nav -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button class="help-tab active" onclick="showHelp(0)">1. Cuentas</button>
+        <button class="help-tab" onclick="showHelp(1)">2. Movimientos</button>
+        <button class="help-tab" onclick="showHelp(2)">3. Presupuestos</button>
+        <button class="help-tab" onclick="showHelp(3)">✦ IA</button>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="help-step active" id="help-0">
+        <div class="help-icon">🏦</div>
+        <div class="help-title">Configura tus cuentas</div>
+        <div class="help-desc">Una cuenta es <strong>donde guardas tu dinero</strong>. Agrega cada banco, billetera o efectivo que uses.</div>
+        <div class="help-examples">
+          <div class="help-ex">💳 Nequi</div>
+          <div class="help-ex">🏦 Bancolombia</div>
+          <div class="help-ex">💵 Efectivo</div>
+          <div class="help-ex">🏦 Davivienda</div>
+        </div>
+        <div class="help-action">Ve a <strong>Cuentas</strong> → <em>"+ Agregar cuenta o billetera"</em></div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="help-step" id="help-1">
+        <div class="help-icon">💸</div>
+        <div class="help-title">Registra tus movimientos</div>
+        <div class="help-desc">Cada vez que <strong>gastes o recibas</strong> dinero, regístralo para tener el control real.</div>
+        <div class="help-examples">
+          <div class="help-ex">📥 <strong>Ingreso</strong> — recibí dinero<br><span style="color:var(--muted);font-size:0.68rem">Sueldo, freelance, ventas</span></div>
+          <div class="help-ex">📤 <strong>Gasto</strong> — gasté dinero<br><span style="color:var(--muted);font-size:0.68rem">Mercado, transporte, servicios</span></div>
+          <div class="help-ex">🔄 <strong>Transferencia</strong> — moví entre cuentas<br><span style="color:var(--muted);font-size:0.68rem">De Nequi a Bancolombia</span></div>
+        </div>
+        <div class="help-action">Usa <strong>"+ Nueva transacción"</strong> o díselo al <strong>asistente IA</strong></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="help-step" id="help-2">
+        <div class="help-icon">🎯</div>
+        <div class="help-title">Controla tus presupuestos</div>
+        <div class="help-desc">Fija un <strong>límite mensual</strong> por categoría. FinTrack te avisa cuando te estás acercando.</div>
+        <div class="help-examples">
+          <div class="help-ex">🍔 Alimentación — $500.000/mes</div>
+          <div class="help-ex">🚗 Transporte — $200.000/mes</div>
+          <div class="help-ex">🎬 Entretenimiento — $150.000/mes</div>
+          <div class="help-ex">🏠 Vivienda — $1.200.000/mes</div>
+        </div>
+        <div class="help-action">Ve a <strong>Presupuestos</strong> → <em>"+ Nuevo presupuesto"</em></div>
+      </div>
+
+      <!-- Step 4 — IA -->
+      <div class="help-step" id="help-3">
+        <div class="help-icon">✦</div>
+        <div class="help-title">El asistente IA — tu contador personal</div>
+        <div class="help-desc">Habla naturalmente, el asistente entiende y actúa. Es el <strong>corazón de FinTrack</strong>.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin:1rem 0">
+          <div>
+            <div style="font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem">REGISTRAR</div>
+            <div class="help-ex">"Rappi 35.000"</div>
+            <div class="help-ex">"taxi 12.000"</div>
+            <div class="help-ex">"me pagaron 3.500.000"</div>
+            <div class="help-ex">"mercado 180.000 en efectivo"</div>
+          </div>
+          <div>
+            <div style="font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem">CONSULTAR</div>
+            <div class="help-ex">"¿cómo van mis finanzas?"</div>
+            <div class="help-ex">"¿en qué gasto más?"</div>
+            <div class="help-ex">"¿cuánto me queda del presupuesto?"</div>
+            <div class="help-ex">"¿cuánto llevo ahorrado?"</div>
+          </div>
+          <div>
+            <div style="font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem">CREAR</div>
+            <div class="help-ex">"nueva cuenta Nequi con 200.000"</div>
+            <div class="help-ex">"presupuesto transporte 300.000"</div>
+            <div class="help-ex">"agrega categoría Mascota"</div>
+          </div>
+          <div>
+            <div style="font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem">GESTIONAR</div>
+            <div class="help-ex">"cambia saldo de Nequi a 500.000"</div>
+            <div class="help-ex">"elimina el presupuesto de ocio"</div>
+            <div class="help-ex">"borra la última transacción"</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn" id="helpPrev" onclick="stepHelp(-1)" style="display:none">← Anterior</button>
+      <span id="helpDots" style="font-size:0.65rem;color:var(--muted);letter-spacing:0.1em">1 / 4</span>
+      <button class="btn btn-accent" id="helpNext" onclick="stepHelp(1)">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── ACCOUNT MODAL ── -->
 <div class="modal-overlay" id="accountModal">
   <div class="modal">
@@ -1124,6 +1251,26 @@ function formatAIText(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/^(📊|📈|📉|💰|🔍|⚠️|✅|🎯|💡|🏦|📌|🔎)\s*([A-ZÁÉÍÓÚÑ ]+)$/gm, '<div class="ai-section-title">$1 $2</div>')
     .replace(/\n/g, '<br>');
+}
+
+let helpStep = 0;
+const HELP_TOTAL = 4;
+
+function openHelp() { helpStep = 0; showHelp(0); openModal('helpModal'); }
+
+function showHelp(idx) {
+  helpStep = idx;
+  document.querySelectorAll('.help-step').forEach((s,i) => s.classList.toggle('active', i===idx));
+  document.querySelectorAll('.help-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.getElementById('helpDots').textContent = `${idx+1} / ${HELP_TOTAL}`;
+  document.getElementById('helpPrev').style.display = idx === 0 ? 'none' : '';
+  document.getElementById('helpNext').textContent = idx === HELP_TOTAL-1 ? '¡Entendido!' : 'Siguiente →';
+}
+
+function stepHelp(dir) {
+  const next = helpStep + dir;
+  if (next >= HELP_TOTAL) { closeModal('helpModal'); return; }
+  showHelp(Math.max(0, next));
 }
 
 function toggleCurrencyMenu() {
