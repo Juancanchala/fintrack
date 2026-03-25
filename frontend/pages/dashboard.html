@@ -2106,6 +2106,23 @@ bootstrap();
 .chat-send:hover { opacity: 0.85; }
 .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.chat-mic {
+  width: 36px; height: 36px; border-radius: 2px; flex-shrink: 0;
+  background: var(--ink3); border: 1px solid var(--border);
+  color: var(--paper2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.chat-mic:hover { border-color: var(--accent); color: var(--accent); }
+.chat-mic.recording {
+  background: rgba(239,68,68,0.12); border-color: #ef4444; color: #ef4444;
+  animation: mic-pulse 1.2s infinite;
+}
+@keyframes mic-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+
 .chat-typing {
   display: none; align-self: flex-start;
   padding: 0.5rem 0.9rem;
@@ -2191,6 +2208,14 @@ bootstrap();
   </div>
 
   <div class="chat-input-row">
+    <button class="chat-mic" id="chatMicBtn" onclick="toggleMic()" title="Hablar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="17" x2="12" y2="21" stroke-linecap="round"/>
+        <line x1="9" y1="21" x2="15" y2="21" stroke-linecap="round"/>
+      </svg>
+    </button>
     <input class="chat-input" id="chatInput" type="text"
       placeholder="Rappi 45000 · ¿en qué gasto más?" autocomplete="off"/>
     <button class="chat-send" id="chatSendBtn" onclick="sendChat()">→</button>
@@ -2276,6 +2301,43 @@ function sendSuggestion(text) {
 document.getElementById('chatInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') sendChat();
 });
+
+// ── Voice input ──
+let _recognition = null;
+let _isRecording  = false;
+
+function _initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'es-ES';
+  r.continuous = false;
+  r.interimResults = false;
+  r.onresult = e => {
+    document.getElementById('chatInput').value = e.results[0][0].transcript;
+    sendChat();
+  };
+  r.onend = r.onerror = () => {
+    _isRecording = false;
+    document.getElementById('chatMicBtn').classList.remove('recording');
+  };
+  return r;
+}
+
+function toggleMic() {
+  if (!_recognition) _recognition = _initSpeech();
+  if (!_recognition) {
+    appendMessage('Tu navegador no soporta voz. Usa Chrome o Edge.', 'bot');
+    return;
+  }
+  if (_isRecording) {
+    _recognition.stop();
+  } else {
+    _isRecording = true;
+    document.getElementById('chatMicBtn').classList.add('recording');
+    _recognition.start();
+  }
+}
 </script>
 </body>
 </html>
